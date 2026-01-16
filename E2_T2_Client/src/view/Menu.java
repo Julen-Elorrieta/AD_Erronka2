@@ -59,6 +59,7 @@ public class Menu extends JFrame {
 		lblWelcome.setText("Bienvenido, " + user + "!");
 		
 		JButton btnPerfil = new JButton("");
+
 		btnPerfil.setBackground(new Color(51, 102, 153));
 		ImageIcon originalIcon = new ImageIcon(Menu.class.getResource("/img/ic_profile.png"));
 		Image scaledImage = originalIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
@@ -161,6 +162,14 @@ public class Menu extends JFrame {
 				dispose();
 				Alumnos alumnos = new Alumnos();
 				alumnos.setVisible(true);
+			}
+		});
+		
+		btnPerfil.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dispose();
+				Perfil perfil = new Perfil(user);
+				perfil.setVisible(true);
 			}
 		});
 	}
