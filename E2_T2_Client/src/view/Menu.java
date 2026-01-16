@@ -110,8 +110,15 @@ public class Menu extends JFrame {
 		btnLogout.setFont(new Font("Tahoma", Font.BOLD, 14));
 		btnLogout.setBackground(new Color(220, 53, 69));
 		btnLogout.setForeground(Color.WHITE);
-		btnLogout.setBounds(684, 510, 90, 40);
+		btnLogout.setBounds(584, 510, 90, 40);
 		contentPane.add(btnLogout);
+		
+		JButton btnIrten = new JButton("Irten");
+		btnIrten.setForeground(Color.WHITE);
+		btnIrten.setFont(new Font("Tahoma", Font.BOLD, 14));
+		btnIrten.setBackground(new Color(192, 192, 192));
+		btnIrten.setBounds(684, 510, 90, 40);
+		contentPane.add(btnIrten);
 		
 		// Button Listeners
 		
@@ -140,6 +147,12 @@ public class Menu extends JFrame {
 				dispose();
 				FirstView login = new FirstView();
 				login.setVisible(true);
+			}
+		});
+		
+		btnIrten.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.exit(0);
 			}
 		});
 	}
