@@ -155,6 +155,14 @@ public class Menu extends JFrame {
 				System.exit(0);
 			}
 		});
+		
+		btnAlumnos.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dispose();
+				Alumnos alumnos = new Alumnos();
+				alumnos.setVisible(true);
+			}
+		});
 	}
 
 }
