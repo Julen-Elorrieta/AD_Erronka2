@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+        <property name="hibernate.connection.url">jdbc:mysql://10.5.104.100:3307/elordb</property>
+        <property name="hibernate.connection.username">eloruser</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+        <property name="hibernate.hbm2ddl.auto">none</property>
+        <property name="hibernate.search.autoregister_listeners">true</property>
+        <property name="hibernate.validator.apply_to_ddl">false</property>
+        <mapping resource="com/elorserv/model/Users.hbm.xml"/>
+        <mapping resource="com/elorserv/model/Horarios.hbm.xml"/>
+        <mapping resource="com/elorserv/model/Matriculaciones.hbm.xml"/>
+        <mapping resource="com/elorserv/model/Tipos.hbm.xml"/>
+        <mapping resource="com/elorserv/model/Ciclos.hbm.xml"/>
+        <mapping resource="com/elorserv/model/Reuniones.hbm.xml"/>
+        <mapping resource="com/elorserv/model/Modulos.hbm.xml"/>
+    </session-factory>
+</hibernate-configuration>
