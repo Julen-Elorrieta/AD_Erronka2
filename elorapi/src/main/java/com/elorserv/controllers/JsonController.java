@@ -1,4 +1,4 @@
-package com.elorserv.elorapi;
+package com.elorserv.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/getCenterList")
-public class Controller {
+public class JsonController {
 
     private List<String> centerList = new ArrayList<>();
 
