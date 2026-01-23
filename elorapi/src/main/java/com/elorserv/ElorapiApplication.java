@@ -1,4 +1,4 @@
-package com.elorserv.elorapi;
+package com.elorserv;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
