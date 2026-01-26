@@ -29,7 +29,7 @@ public class Matriculaciones implements java.io.Serializable {
 	private Ciclos ciclos;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
-    @JoinColumn(name = "alumn_id")
+    @JoinColumn(name = "alum_id")
 	private Users users;
 	
 	@Column

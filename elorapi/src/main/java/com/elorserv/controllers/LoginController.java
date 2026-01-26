@@ -47,7 +47,10 @@ public class LoginController {
                 u.getPassword(),
                 u.getNombre(),
                 u.getApellidos(),
-                u.getTipos() != null ? u.getTipos().getId() : null
+                u.getTipos() != null ? u.getTipos().getId() : null,
+                u.getDireccion(),
+                u.getTelefono1(),
+                u.getTelefono2()
             );
 
             // Store minimal info in session for subsequent requests
