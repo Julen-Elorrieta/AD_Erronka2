@@ -21,10 +21,11 @@ public class UserController {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @GetMapping
+    @GetMapping("/getAlumnos")
     public ResponseEntity<?> getAllUsers() {
         try {
-            TypedQuery<Users> q = entityManager.createQuery("SELECT u FROM Users u", Users.class);
+            TypedQuery<Users> q = entityManager.createQuery("SELECT u FROM Users u WHERE u.tipoid = :tipoid", Users.class);
+            q.setParameter("tipoid", 4);
             List<Users> list = q.getResultList();
             return ResponseEntity.ok(list);
         } catch (Exception e) {
@@ -42,5 +43,7 @@ public class UserController {
             return ResponseEntity.status(500).body("Server error: " + e.getMessage());
         }
     }
+    
+    
 
 }
