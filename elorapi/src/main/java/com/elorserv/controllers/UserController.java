@@ -22,10 +22,21 @@ public class UserController {
     private EntityManager entityManager;
 
     @GetMapping("/getAlumnos")
+    public ResponseEntity<?> getAllStudents() {
+        try {
+            TypedQuery<Users> q = entityManager.createQuery("SELECT u FROM Users u WHERE u.tipos.id = :tipoid", Users.class);
+            q.setParameter("tipoid", 4);
+            List<Users> list = q.getResultList();
+            return ResponseEntity.ok(list);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Server error: " + e.getMessage());
+        }
+    }
+    
+    @GetMapping("/getUsers")
     public ResponseEntity<?> getAllUsers() {
         try {
-            TypedQuery<Users> q = entityManager.createQuery("SELECT u FROM Users u WHERE u.tipoid = :tipoid", Users.class);
-            q.setParameter("tipoid", 4);
+            TypedQuery<Users> q = entityManager.createQuery("SELECT u FROM Users u", Users.class);
             List<Users> list = q.getResultList();
             return ResponseEntity.ok(list);
         } catch (Exception e) {
