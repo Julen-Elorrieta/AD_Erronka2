@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.elorserv.model.Users;
@@ -34,9 +35,10 @@ public class UserController {
     }
     
     @GetMapping("/getUsers")
-    public ResponseEntity<?> getAllUsers() {
+    public ResponseEntity<?> getAllUsers(@RequestParam Integer id) {
         try {
-            TypedQuery<Users> q = entityManager.createQuery("SELECT u FROM Users u", Users.class);
+            TypedQuery<Users> q = entityManager.createQuery("SELECT u FROM Users u WHERE u.id != :id", Users.class);
+            q.setParameter("id", id);
             List<Users> list = q.getResultList();
             return ResponseEntity.ok(list);
         } catch (Exception e) {
