@@ -6,10 +6,12 @@ import java.util.Collections;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Transactional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -101,6 +103,32 @@ public class UserController {
             return ResponseEntity.status(500).body("Server error: " + e.getMessage());
         }
     }
-
+    
+    @PostMapping("/updateProfilePic/{id}/{url}")
+    @Transactional
+    public ResponseEntity<?> updateProfilePic(@PathVariable Integer id, @PathVariable String url) {
+        try {            
+            // Buscar el usuario
+            Users user = entityManager.find(Users.class, id);
+            
+            if (user == null) {
+                return ResponseEntity.status(404).body("Usuario no encontrado con id: " + id);
+            }
+            
+            // Actualizar el campo argazkiaUrl
+            user.setArgazkiaUrl(url);
+            
+            // Persistir el cambio
+            entityManager.merge(user);
+            
+            System.out.println("Foto de perfil actualizada correctamente");
+            
+            return ResponseEntity.ok("Foto de perfil actualizada correctamente");
+        } catch (Exception e) {
+            System.err.println("ERROR al actualizar foto de perfil: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Server error: " + e.getMessage());
+        }
+    }
 
 }
