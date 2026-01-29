@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.elorserv.model.Users;
+import com.elorserv.model.Horarios;
 
 @RestController
 @RequestMapping("/users")
@@ -123,5 +124,43 @@ public class UserController {
 			return ResponseEntity.status(500).body("Server error: " + e.getMessage());
 		}
 	}
+
+    // New endpoint: obtener el horario de un alumno según el/los ciclo(s) en los que está matriculado
+    @GetMapping("/alumno/{id}/horario")
+    public ResponseEntity<?> getHorarioForAlumno(@PathVariable Integer id) {
+        try {
+
+            // Paso 1: Obtener los ciclos en los que está matriculado el alumno
+            TypedQuery<Integer> qCiclos = entityManager.createQuery(
+                "SELECT DISTINCT mat.ciclos.id FROM Matriculaciones mat WHERE mat.users.id = :uid",
+                Integer.class
+            );
+            qCiclos.setParameter("uid", id);
+            List<Integer> cicloIds = qCiclos.getResultList();
+
+            System.out.println("Ciclos encontrados para alumno " + id + ": " + cicloIds);
+
+            if (cicloIds == null || cicloIds.isEmpty()) {
+                System.out.println("No hay matriculaciones para el alumno " + id);
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+
+            // Paso 2: Obtener los horarios de los módulos que pertenecen a esos ciclos
+            TypedQuery<Horarios> qHorarios = entityManager.createQuery(
+                "SELECT DISTINCT h FROM Horarios h JOIN h.modulos m WHERE m.ciclos.id IN :cicloIds",
+                Horarios.class
+            );
+            qHorarios.setParameter("cicloIds", cicloIds);
+            List<Horarios> horarios = qHorarios.getResultList();
+
+            System.out.println("Entradas de horario encontradas: " + (horarios == null ? 0 : horarios.size()));
+
+            return ResponseEntity.ok(horarios);
+        } catch (Exception e) {
+            System.err.println("ERROR en getHorarioForAlumno: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Server error: " + e.getMessage());
+        }
+    }
 
 }
