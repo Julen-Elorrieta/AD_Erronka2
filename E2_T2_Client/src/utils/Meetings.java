@@ -17,301 +17,230 @@ import com.google.gson.JsonObject;
 
 import connect.Connect;
 
-/**
- * Cliente Socket para operaciones con reuniones
- * 
- * Conecta con el servidor TCP para obtener y gestionar reuniones entre
- * profesores y alumnos
- */
-public class Meetings {
+public final class Meetings {
+	private static final Connect konexioa = new Connect();
+	private static final String ZERBITZARIA_HOST = konexioa.getServerHost();
+	private static final int ZERBITZARIA_PORTUA = konexioa.getServerPort();
+	private static final int TIMEOUT = konexioa.getTimeout();
 
-	private static Connect connect = new Connect();
-
-	private static final String SERVER_HOST = connect.getServerHost();
-	private static final int SERVER_PORT = connect.getServerPort();
-	private static final int TIMEOUT = connect.getTimeout();
-
-	private Gson gson;
+	private final Gson gson;
 
 	public Meetings() {
 		this.gson = new Gson();
 	}
 
-	/**
-	 * Obtiene todas las reuniones del sistema
-	 * 
-	 * @return Lista de reuniones o lista vacía si hay error
-	 */
-	public List<MeetingData> obtenerTodasReuniones() {
-		return ejecutarComando("LORTU_REUNIONES");
+	public List<BileraData> lortuBileraGuztiak() {
+		return exekutatuKomandoa("LORTU_REUNIONES");
 	}
 
-	/**
-	 * Obtiene reuniones de un profesor específico
-	 * 
-	 * @param profesorId ID del profesor
-	 * @return Lista de reuniones del profesor
-	 */
-	public List<MeetingData> obtenerReunionesPorProfesor(long profesorId) {
-		return ejecutarComando("LORTU_REUNIONES_PROFE:" + profesorId);
+	public List<BileraData> lortuBilerakIrakasleaArabera(long irakasleaId) {
+		return exekutatuKomandoa("LORTU_REUNIONES_PROFE:" + irakasleaId);
 	}
 
-	/**
-	 * Obtiene reuniones de un alumno específico
-	 * 
-	 * @param alumnoId ID del alumno
-	 * @return Lista de reuniones del alumno
-	 */
-	public List<MeetingData> obtenerReunionesPorAlumno(long alumnoId) {
-		return ejecutarComando("LORTU_REUNIONES_ALUMNO:" + alumnoId);
+	public List<BileraData> lortuBilerakIkasleaArabera(long ikasleaId) {
+		return exekutatuKomandoa("LORTU_REUNIONES_ALUMNO:" + ikasleaId);
 	}
 
-	/**
-	 * Ejecuta un comando que devuelve lista de reuniones
-	 */
-	private List<MeetingData> ejecutarComando(String comando) {
-		List<MeetingData> reuniones = new ArrayList<>();
-		Socket socket = null;
+	private List<BileraData> exekutatuKomandoa(String komandoa) {
+		List<BileraData> bilerak = new ArrayList<>();
 
-		try {
-			socket = new Socket(SERVER_HOST, SERVER_PORT);
+		try (Socket socket = new Socket(ZERBITZARIA_HOST, ZERBITZARIA_PORTUA)) {
 			socket.setSoTimeout(TIMEOUT);
 
-			PrintWriter salida = new PrintWriter(socket.getOutputStream(), true);
-			BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			try (PrintWriter irteera = new PrintWriter(socket.getOutputStream(), true);
+					BufferedReader sarrera = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-			salida.println(comando);
+				irteera.println(komandoa);
 
-			String respuesta = entrada.readLine();
+				String erantzuna = sarrera.readLine();
 
-			if (respuesta == null || respuesta.trim().isEmpty()) {
-				System.err.println("No se recibió respuesta del servidor");
-				return reuniones;
-			}
-
-			JsonObject jsonRespuesta = gson.fromJson(respuesta, JsonObject.class);
-
-			if (jsonRespuesta.has("errorea")) {
-				System.err.println("Error del servidor: " + jsonRespuesta.get("errorea").getAsString());
-				return reuniones;
-			}
-
-			if (jsonRespuesta.has("reuniones")) {
-				JsonArray reunionesArray = jsonRespuesta.getAsJsonArray("reuniones");
-
-				for (int i = 0; i < reunionesArray.size(); i++) {
-					JsonObject reunionJson = reunionesArray.get(i).getAsJsonObject();
-					MeetingData reunion = jsonToMeetingData(reunionJson);
-					reuniones.add(reunion);
+				if (erantzuna == null || erantzuna.trim().isEmpty()) {
+					System.err.println("Ez da erantzunik jaso zerbitzaritik");
+					return bilerak;
 				}
 
-				System.out.println("✓ Cargadas " + reuniones.size() + " reuniones desde el servidor");
+				JsonObject jsonErantzuna = gson.fromJson(erantzuna, JsonObject.class);
+
+				if (jsonErantzuna.has("errorea")) {
+					System.err.println("Zerbitzari errorea: " + jsonErantzuna.get("errorea").getAsString());
+					return bilerak;
+				}
+
+				if (jsonErantzuna.has("reuniones")) {
+					JsonArray bilerakArray = jsonErantzuna.getAsJsonArray("reuniones");
+
+					for (int i = 0; i < bilerakArray.size(); i++) {
+						JsonObject bileraJson = bilerakArray.get(i).getAsJsonObject();
+						BileraData bilera = jsonToBileraData(bileraJson);
+						bilerak.add(bilera);
+					}
+
+					System.out.println("✓ " + bilerak.size() + " bilera kargatuta zerbitzaritik");
+				}
 			}
-
 		} catch (SocketTimeoutException e) {
-			System.err.println("Timeout conectando al servidor: " + e.getMessage());
-
+			System.err.println("Timeout zerbitzarira konektatzean: " + e.getMessage());
 		} catch (IOException e) {
-			System.err.println("Error de conexión: " + e.getMessage());
-
+			System.err.println("Konexio errorea: " + e.getMessage());
 		} catch (Exception e) {
-			System.err.println("Error inesperado: " + e.getMessage());
+			System.err.println("Ustekabeko errorea: " + e.getMessage());
 			e.printStackTrace();
-
-		} finally {
-			cerrarSocket(socket);
 		}
 
-		return reuniones;
+		return bilerak;
 	}
 
-	/**
-	 * Convierte un JsonObject a MeetingData
-	 */
-	private MeetingData jsonToMeetingData(JsonObject meetingJson) {
-		Long idReunion = meetingJson.get("idReunion").getAsLong();
+	private BileraData jsonToBileraData(JsonObject bileraJson) {
+		Long bileraId = bileraJson.get("idReunion").getAsLong();
 
-		String estado = meetingJson.has("estado") && !meetingJson.get("estado").isJsonNull()
-				? meetingJson.get("estado").getAsString()
+		String egoera = bileraJson.has("estado") && !bileraJson.get("estado").isJsonNull()
+				? bileraJson.get("estado").getAsString()
 				: "pendiente";
 
-		String estadoEus = meetingJson.has("estadoEus") && !meetingJson.get("estadoEus").isJsonNull()
-				? meetingJson.get("estadoEus").getAsString()
+		String egoeraeus = bileraJson.has("estadoEus") && !bileraJson.get("estadoEus").isJsonNull()
+				? bileraJson.get("estadoEus").getAsString()
 				: "onartzeke";
 
-		Long profesorId = meetingJson.has("profesorId") && !meetingJson.get("profesorId").isJsonNull()
-				? meetingJson.get("profesorId").getAsLong()
+		Long irakasleaId = bileraJson.has("profesorId") && !bileraJson.get("profesorId").isJsonNull()
+				? bileraJson.get("profesorId").getAsLong()
 				: null;
 
-		Long alumnoId = meetingJson.has("alumnoId") && !meetingJson.get("alumnoId").isJsonNull()
-				? meetingJson.get("alumnoId").getAsLong()
+		Long ikasleaId = bileraJson.has("alumnoId") && !bileraJson.get("alumnoId").isJsonNull()
+				? bileraJson.get("alumnoId").getAsLong()
 				: null;
 
-		String idCentro = meetingJson.has("idCentro") && !meetingJson.get("idCentro").isJsonNull()
-				? meetingJson.get("idCentro").getAsString()
+		String zentroId = bileraJson.has("idCentro") && !bileraJson.get("idCentro").isJsonNull()
+				? bileraJson.get("idCentro").getAsString()
 				: "";
 
-		String titulo = meetingJson.has("titulo") && !meetingJson.get("titulo").isJsonNull()
-				? meetingJson.get("titulo").getAsString()
+		String izenburua = bileraJson.has("titulo") && !bileraJson.get("titulo").isJsonNull()
+				? bileraJson.get("titulo").getAsString()
 				: "";
 
-		String asunto = meetingJson.has("asunto") && !meetingJson.get("asunto").isJsonNull()
-				? meetingJson.get("asunto").getAsString()
+		String gaia = bileraJson.has("asunto") && !bileraJson.get("asunto").isJsonNull()
+				? bileraJson.get("asunto").getAsString()
 				: "";
 
-		String aula = meetingJson.has("aula") && !meetingJson.get("aula").isJsonNull()
-				? meetingJson.get("aula").getAsString()
+		String gela = bileraJson.has("aula") && !bileraJson.get("aula").isJsonNull()
+				? bileraJson.get("aula").getAsString()
 				: "";
 
-		LocalDateTime fecha = null;
-		if (meetingJson.has("fecha") && !meetingJson.get("fecha").isJsonNull()) {
-			String fechaStr = meetingJson.get("fecha").getAsString();
+		LocalDateTime data = null;
+		if (bileraJson.has("fecha") && !bileraJson.get("fecha").isJsonNull()) {
+			String dataStr = bileraJson.get("fecha").getAsString();
 			try {
-				fecha = LocalDateTime.parse(fechaStr);
+				data = LocalDateTime.parse(dataStr);
 			} catch (Exception e) {
-				System.err.println("Error parseando fecha: " + fechaStr);
+				System.err.println("Errorea data analizatzean: " + dataStr);
 			}
 		}
 
-		return new MeetingData(idReunion, estado, estadoEus, profesorId, alumnoId, idCentro, titulo, asunto, aula,
-				fecha);
+		return new BileraData(bileraId, egoera, egoeraeus, irakasleaId, ikasleaId, zentroId, izenburua, gaia, gela,
+				data);
 	}
 
-	/**
-	 * Cierra el socket de forma segura
-	 */
-	private void cerrarSocket(Socket socket) {
-		if (socket != null && !socket.isClosed()) {
-			try {
-				socket.close();
-			} catch (IOException e) {
-				System.err.println("Error al cerrar socket: " + e.getMessage());
-			}
-		}
-	}
+	public static final class BileraData {
+		private final Long bileraId;
+		private final String egoera;
+		private final String egoeraeus;
+		private final Long irakasleaId;
+		private final Long ikasleaId;
+		private final String zentroId;
+		private final String izenburua;
+		private final String gaia;
+		private final String gela;
+		private final LocalDateTime data;
 
-	/**
-	 * Clase para almacenar datos de reunión
-	 */
-	public static class MeetingData {
-		private Long idReunion;
-		private String estado;
-		private String estadoEus;
-		private Long profesorId;
-		private Long alumnoId;
-		private String idCentro;
-		private String titulo;
-		private String asunto;
-		private String aula;
-		private LocalDateTime fecha;
-
-		public MeetingData(Long idReunion, String estado, String estadoEus, Long profesorId, Long alumnoId,
-				String idCentro, String titulo, String asunto, String aula, LocalDateTime fecha) {
-			this.idReunion = idReunion;
-			this.estado = estado;
-			this.estadoEus = estadoEus;
-			this.profesorId = profesorId;
-			this.alumnoId = alumnoId;
-			this.idCentro = idCentro;
-			this.titulo = titulo;
-			this.asunto = asunto;
-			this.aula = aula;
-			this.fecha = fecha;
+		public BileraData(Long bileraId, String egoera, String egoeraeus, Long irakasleaId, Long ikasleaId,
+				String zentroId, String izenburua, String gaia, String gela, LocalDateTime data) {
+			this.bileraId = bileraId;
+			this.egoera = egoera;
+			this.egoeraeus = egoeraeus;
+			this.irakasleaId = irakasleaId;
+			this.ikasleaId = ikasleaId;
+			this.zentroId = zentroId;
+			this.izenburua = izenburua;
+			this.gaia = gaia;
+			this.gela = gela;
+			this.data = data;
 		}
 
-		// Getters
-		public Long getIdReunion() {
-			return idReunion;
+		public Long getBileraId() {
+			return bileraId;
 		}
 
-		public String getEstado() {
-			return estado;
+		public String getEgoera() {
+			return egoera;
 		}
 
-		public String getEstadoEus() {
-			return estadoEus;
+		public String getEgoeraeus() {
+			return egoeraeus;
 		}
 
-		public Long getProfesorId() {
-			return profesorId;
+		public Long getIrakasleaId() {
+			return irakasleaId;
 		}
 
-		public Long getAlumnoId() {
-			return alumnoId;
+		public Long getIkasleaId() {
+			return ikasleaId;
 		}
 
-		public String getIdCentro() {
-			return idCentro;
+		public String getZentroId() {
+			return zentroId;
 		}
 
-		public String getTitulo() {
-			return titulo;
+		public String getIzenburua() {
+			return izenburua;
 		}
 
-		public String getAsunto() {
-			return asunto;
+		public String getGaia() {
+			return gaia;
 		}
 
-		public String getAula() {
-			return aula;
+		public String getGela() {
+			return gela;
 		}
 
-		public LocalDateTime getFecha() {
-			return fecha;
+		public LocalDateTime getData() {
+			return data;
 		}
 
-		/**
-		 * Obtiene el estado en español
-		 */
-		public String getEstadoEspañol() {
-			switch (estado.toLowerCase()) {
-			case "pendiente":
-				return "Pendiente";
-			case "aceptada":
-				return "Aceptada";
-			case "denegada":
-				return "Denegada";
-			case "conflicto":
-				return "Conflicto";
-			default:
-				return estado;
-			}
+		public String getEgoeraEuskera() {
+			return switch (egoera.toLowerCase()) {
+			case "pendiente" -> "Onartzeke";
+			case "aceptada" -> "Onartua";
+			case "denegada" -> "Ukatua";
+			case "conflicto" -> "Gatazka";
+			default -> egoera;
+			};
 		}
 
-		/**
-		 * Obtiene la fecha formateada
-		 */
-		public String getFechaFormateada() {
-			if (fecha == null)
-				return "Sin fecha";
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-			return fecha.format(formatter);
+		public String getDataFormateatua() {
+			if (data == null)
+				return "Data gabe";
+			DateTimeFormatter formateatzailea = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+			return data.format(formateatzailea);
 		}
 
-		/**
-		 * Obtiene solo la fecha (sin hora)
-		 */
-		public String getFechaSoloFecha() {
-			if (fecha == null)
-				return "Sin fecha";
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-			return fecha.format(formatter);
+		public String getDataSoilik() {
+			if (data == null)
+				return "Data gabe";
+			DateTimeFormatter formateatzailea = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+			return data.format(formateatzailea);
 		}
 
-		/**
-		 * Obtiene solo la hora
-		 */
-		public String getFechaSoloHora() {
-			if (fecha == null)
+		public String getOrduaSoilik() {
+			if (data == null)
 				return "--:--";
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-			return fecha.format(formatter);
+			DateTimeFormatter formateatzailea = DateTimeFormatter.ofPattern("HH:mm");
+			return data.format(formateatzailea);
 		}
 
 		@Override
 		public String toString() {
-			return "MeetingData{" + "idReunion=" + idReunion + ", titulo='" + titulo + '\'' + ", estado=" + estado
-					+ ", profesorId=" + profesorId + ", alumnoId=" + alumnoId + ", fecha=" + getFechaFormateada() + '}';
+			return "BileraData{" + "bileraId=" + bileraId + ", izenburua='" + izenburua + '\'' + ", egoera=" + egoera
+					+ ", irakasleaId=" + irakasleaId + ", ikasleaId=" + ikasleaId + ", data=" + getDataFormateatua()
+					+ '}';
 		}
 	}
 }

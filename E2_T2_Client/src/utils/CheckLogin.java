@@ -12,133 +12,118 @@ import com.google.gson.JsonObject;
 
 import connect.Connect;
 
-public class CheckLogin {
-	
-	private static Connect connect = new Connect();
+public final class CheckLogin {
+	private static final Connect konexioa = new Connect();
+	private static final String ZERBITZARIA_HOST = konexioa.getServerHost();
+	private static final int ZERBITZARIA_PORTUA = konexioa.getServerPort();
+	private static final int TIMEOUT = konexioa.getTimeout();
 
-	private static final String SERVER_HOST = connect.getServerHost();
-	private static final int SERVER_PORT = connect.getServerPort();
-	private static final int TIMEOUT = connect.getTimeout();
-
-	private Gson gson;
+	private final Gson gson;
 
 	public CheckLogin() {
 		this.gson = new Gson();
 	}
 
-	public LoginResponse validarLogin(String email, String password) {
-
-		if (email == null || email.trim().isEmpty()) {
-			return new LoginResponse(false, "El email no puede estar vacío", null);
+	public LoginErantzuna balidatuLogin(String emaila, String pasahitza) {
+		if (emaila == null || emaila.trim().isEmpty()) {
+			return new LoginErantzuna(false, "Emaila ezin da hutsik egon", null);
 		}
 
-		if (password == null || password.trim().isEmpty()) {
-			return new LoginResponse(false, "La contraseña no puede estar vacía", null);
+		if (pasahitza == null || pasahitza.trim().isEmpty()) {
+			return new LoginErantzuna(false, "Pasahitza ezin da hutsik egon", null);
 		}
 
-		Socket socket = null;
-
-		try {
-			socket = new Socket(SERVER_HOST, SERVER_PORT);
+		try (Socket socket = new Socket(ZERBITZARIA_HOST, ZERBITZARIA_PORTUA)) {
 			socket.setSoTimeout(TIMEOUT);
 
-			PrintWriter salida = new PrintWriter(socket.getOutputStream(), true);
-			BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			try (PrintWriter irteera = new PrintWriter(socket.getOutputStream(), true);
+					BufferedReader sarrera = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-			String comando = String.format("LOGIN:%s:%s", email, password);
-			salida.println(comando);
+				String komandoa = String.format("LOGIN:%s:%s", emaila, pasahitza);
+				irteera.println(komandoa);
 
-			String respuesta = entrada.readLine();
+				String erantzuna = sarrera.readLine();
 
-			if (respuesta == null || respuesta.trim().isEmpty()) {
-				return new LoginResponse(false, "No se recibió respuesta del servidor", null);
-			}
+				if (erantzuna == null || erantzuna.trim().isEmpty()) {
+					return new LoginErantzuna(false, "Ez da erantzunik jaso zerbitzaritik", null);
+				}
 
-			JsonObject jsonRespuesta = gson.fromJson(respuesta, JsonObject.class);
+				JsonObject jsonErantzuna = gson.fromJson(erantzuna, JsonObject.class);
 
-			boolean arrakasta = jsonRespuesta.get("arrakasta").getAsBoolean();
-			String mezua = jsonRespuesta.get("mezua").getAsString();
+				boolean arrakasta = jsonErantzuna.get("arrakasta").getAsBoolean();
+				String mezua = jsonErantzuna.get("mezua").getAsString();
 
-			if (arrakasta) {
-				JsonObject userData = jsonRespuesta.getAsJsonObject("erabiltzailea");
-				UserData user = new UserData(userData.get("id").getAsLong(), userData.get("email").getAsString(),
-						userData.get("username").getAsString(), userData.get("nombre").getAsString(),
-						userData.get("apellidos").getAsString(), userData.get("dni").getAsString(),
-						userData.get("tipoId").getAsInt(), userData.get("telefono1").getAsString(),
-						userData.has("argazkiaUrl") && !userData.get("argazkiaUrl").isJsonNull()
-								? userData.get("argazkiaUrl").getAsString()
-								: null);
+				if (arrakasta) {
+					JsonObject erabiltzaileData = jsonErantzuna.getAsJsonObject("erabiltzailea");
+					ErabiltzaileData erabiltzailea = new ErabiltzaileData(erabiltzaileData.get("id").getAsLong(),
+							erabiltzaileData.get("email").getAsString(), erabiltzaileData.get("username").getAsString(),
+							erabiltzaileData.get("nombre").getAsString(),
+							erabiltzaileData.get("apellidos").getAsString(), erabiltzaileData.get("dni").getAsString(),
+							erabiltzaileData.get("tipoId").getAsInt(), erabiltzaileData.get("telefono1").getAsString(),
+							erabiltzaileData.has("argazkiaUrl") && !erabiltzaileData.get("argazkiaUrl").isJsonNull()
+									? erabiltzaileData.get("argazkiaUrl").getAsString()
+									: null);
 
-				return new LoginResponse(true, mezua, user);
-			} else {
-				return new LoginResponse(false, mezua, null);
+					return new LoginErantzuna(true, mezua, erabiltzailea);
+				}
+
+				return new LoginErantzuna(false, mezua, null);
 			}
 
 		} catch (SocketTimeoutException e) {
-			return new LoginResponse(false, "Tiempo de espera agotado. El servidor no responde.", null);
-
+			return new LoginErantzuna(false, "Itxaron-denbora amaitu da. Zerbitzariak ez du erantzuten.", null);
 		} catch (IOException e) {
-			return new LoginResponse(false, "Error de conexión: " + e.getMessage(), null);
-
+			return new LoginErantzuna(false, "Konexio errorea: " + e.getMessage(), null);
 		} catch (Exception e) {
-			return new LoginResponse(false, "Error inesperado: " + e.getMessage(), null);
-
-		} finally {
-			if (socket != null && !socket.isClosed()) {
-				try {
-					socket.close();
-				} catch (IOException e) {
-					System.err.println("Error al cerrar socket: " + e.getMessage());
-				}
-			}
+			return new LoginErantzuna(false, "Ustekabeko errorea: " + e.getMessage(), null);
 		}
 	}
 
-	public static class LoginResponse {
-		private boolean exitoso;
-		private String mensaje;
-		private UserData usuario;
+	public static final class LoginErantzuna {
+		private final boolean arrakastatsua;
+		private final String mezua;
+		private final ErabiltzaileData erabiltzailea;
 
-		public LoginResponse(boolean exitoso, String mensaje, UserData usuario) {
-			this.exitoso = exitoso;
-			this.mensaje = mensaje;
-			this.usuario = usuario;
+		public LoginErantzuna(boolean arrakastatsua, String mezua, ErabiltzaileData erabiltzailea) {
+			this.arrakastatsua = arrakastatsua;
+			this.mezua = mezua;
+			this.erabiltzailea = erabiltzailea;
 		}
 
-		public boolean isExitoso() {
-			return exitoso;
+		public boolean isArrakastatsua() {
+			return arrakastatsua;
 		}
 
-		public String getMensaje() {
-			return mensaje;
+		public String getMezua() {
+			return mezua;
 		}
 
-		public UserData getUsuario() {
-			return usuario;
+		public ErabiltzaileData getErabiltzailea() {
+			return erabiltzailea;
 		}
 	}
 
-	public static class UserData {
-		private Long id;
-		private String email;
-		private String username;
-		private String nombre;
-		private String apellidos;
-		private String dni;
-		private Integer tipoId;
-		private String telefono1;
-		private String argazkiaUrl;
+	public static final class ErabiltzaileData {
+		private final Long id;
+		private final String email;
+		private final String erabiltzaileIzena;
+		private final String izena;
+		private final String abizenak;
+		private final String dni;
+		private final Integer mota;
+		private final String telefonoa1;
+		private final String argazkiaUrl;
 
-		public UserData(Long id, String email, String username, String nombre, String apellidos, String dni,
-				Integer tipoId, String telefono1, String argazkiaUrl) {
+		public ErabiltzaileData(Long id, String email, String erabiltzaileIzena, String izena, String abizenak,
+				String dni, Integer mota, String telefonoa1, String argazkiaUrl) {
 			this.id = id;
 			this.email = email;
-			this.username = username;
-			this.nombre = nombre;
-			this.apellidos = apellidos;
+			this.erabiltzaileIzena = erabiltzaileIzena;
+			this.izena = izena;
+			this.abizenak = abizenak;
 			this.dni = dni;
-			this.tipoId = tipoId;
-			this.telefono1 = telefono1;
+			this.mota = mota;
+			this.telefonoa1 = telefonoa1;
 			this.argazkiaUrl = argazkiaUrl;
 		}
 
@@ -150,36 +135,36 @@ public class CheckLogin {
 			return email;
 		}
 
-		public String getUsername() {
-			return username;
+		public String getErabiltzaileIzena() {
+			return erabiltzaileIzena;
 		}
 
-		public String getNombre() {
-			return nombre;
+		public String getIzena() {
+			return izena;
 		}
 
-		public String getApellidos() {
-			return apellidos;
+		public String getAbizenak() {
+			return abizenak;
 		}
 
 		public String getDni() {
 			return dni;
 		}
 
-		public Integer getTipoId() {
-			return tipoId;
+		public Integer getMota() {
+			return mota;
 		}
 
-		public String getTelefono1() {
-			return telefono1;
+		public String getTelefonoa1() {
+			return telefonoa1;
 		}
 
 		public String getArgazkiaUrl() {
 			return argazkiaUrl;
 		}
 
-		public String getNombreCompleto() {
-			return nombre + " " + apellidos;
+		public String getIzenOsoa() {
+			return izena + " " + abizenak;
 		}
 	}
 }

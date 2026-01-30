@@ -12,232 +12,171 @@ import com.google.gson.JsonObject;
 
 import connect.Connect;
 
-/**
- * Cliente Socket para operaciones de perfil de usuario
- * 
- * Conecta con el servidor TCP para obtener y actualizar información del perfil
- * del usuario
- */
-public class Profile {
+public final class Profile {
+	private static final Connect konexioa = new Connect();
+	private static final String ZERBITZARIA_HOST = konexioa.getServerHost();
+	private static final int ZERBITZARIA_PORTUA = konexioa.getServerPort();
+	private static final int TIMEOUT = konexioa.getTimeout();
 
-	private static Connect connect = new Connect();
-
-	private static final String SERVER_HOST = connect.getServerHost();
-	private static final int SERVER_PORT = connect.getServerPort();
-	private static final int TIMEOUT = connect.getTimeout();
-
-	private Gson gson;
+	private final Gson gson;
 
 	public Profile() {
 		this.gson = new Gson();
 	}
 
-	/**
-	 * Obtiene los datos completos de un usuario por ID
-	 * 
-	 * @param userId ID del usuario
-	 * @return UserProfileData con toda la información o null si hay error
-	 */
-	public UserProfileData obtenerPerfilUsuario(long userId) {
-		Socket socket = null;
-
-		try {
-			socket = new Socket(SERVER_HOST, SERVER_PORT);
+	public ErabiltzaileProfilData lortuErabiltzaileProfila(long erabiltzaileId) {
+		try (Socket socket = new Socket(ZERBITZARIA_HOST, ZERBITZARIA_PORTUA)) {
 			socket.setSoTimeout(TIMEOUT);
 
-			PrintWriter salida = new PrintWriter(socket.getOutputStream(), true);
-			BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			try (PrintWriter irteera = new PrintWriter(socket.getOutputStream(), true);
+					BufferedReader sarrera = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-			String comando = "LORTU_USER:" + userId;
-			salida.println(comando);
+				String komandoa = "LORTU_USER:" + erabiltzaileId;
+				irteera.println(komandoa);
 
-			String respuesta = entrada.readLine();
+				String erantzuna = sarrera.readLine();
 
-			if (respuesta == null || respuesta.trim().isEmpty()) {
-				System.err.println("No se recibió respuesta del servidor");
+				if (erantzuna == null || erantzuna.trim().isEmpty()) {
+					System.err.println("Ez da erantzunik jaso zerbitzaritik");
+					return null;
+				}
+
+				JsonObject jsonErantzuna = gson.fromJson(erantzuna, JsonObject.class);
+
+				if (jsonErantzuna.has("errorea")) {
+					System.err.println("Zerbitzari errorea: " + jsonErantzuna.get("errorea").getAsString());
+					return null;
+				}
+
+				if (jsonErantzuna.has("aurkituta") && jsonErantzuna.get("aurkituta").getAsBoolean()) {
+					JsonObject userJson = jsonErantzuna.getAsJsonObject("user");
+					return jsonToErabiltzaileProfilData(userJson);
+				}
+
+				System.err.println("Ez da aurkitu erabiltzailea ID honekin: " + erabiltzaileId);
 				return null;
 			}
-
-			JsonObject jsonRespuesta = gson.fromJson(respuesta, JsonObject.class);
-
-			if (jsonRespuesta.has("errorea")) {
-				System.err.println("Error del servidor: " + jsonRespuesta.get("errorea").getAsString());
-				return null;
-			}
-
-			if (jsonRespuesta.has("aurkituta") && jsonRespuesta.get("aurkituta").getAsBoolean()) {
-				JsonObject userJson = jsonRespuesta.getAsJsonObject("user");
-				return jsonToUserProfileData(userJson);
-			} else {
-				System.err.println("Usuario no encontrado con ID: " + userId);
-				return null;
-			}
-
 		} catch (SocketTimeoutException e) {
-			System.err.println("Timeout conectando al servidor: " + e.getMessage());
+			System.err.println("Timeout zerbitzarira konektatzean: " + e.getMessage());
 			return null;
-
 		} catch (IOException e) {
-			System.err.println("Error de conexión: " + e.getMessage());
+			System.err.println("Konexio errorea: " + e.getMessage());
 			return null;
-
 		} catch (Exception e) {
-			System.err.println("Error inesperado: " + e.getMessage());
+			System.err.println("Ustekabeko errorea: " + e.getMessage());
 			e.printStackTrace();
 			return null;
-
-		} finally {
-			cerrarSocket(socket);
 		}
 	}
 
-	/**
-	 * Obtiene el tipo de usuario (nombre descriptivo)
-	 * 
-	 * @param tipoId ID del tipo
-	 * @return Nombre del tipo o null si hay error
-	 */
-	public String obtenerNombreTipo(long tipoId) {
-		Socket socket = null;
-
-		try {
-			socket = new Socket(SERVER_HOST, SERVER_PORT);
+	public String lortuMotaIzena(long motaId) {
+		try (Socket socket = new Socket(ZERBITZARIA_HOST, ZERBITZARIA_PORTUA)) {
 			socket.setSoTimeout(TIMEOUT);
 
-			PrintWriter salida = new PrintWriter(socket.getOutputStream(), true);
-			BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			try (PrintWriter irteera = new PrintWriter(socket.getOutputStream(), true);
+					BufferedReader sarrera = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-			String comando = "LORTU_TIPO:" + tipoId;
-			salida.println(comando);
+				String komandoa = "LORTU_TIPO:" + motaId;
+				irteera.println(komandoa);
 
-			String respuesta = entrada.readLine();
+				String erantzuna = sarrera.readLine();
 
-			if (respuesta == null || respuesta.trim().isEmpty()) {
-				return getTipoNombrePorDefecto(tipoId);
+				if (erantzuna == null || erantzuna.trim().isEmpty()) {
+					return getMotaIzenaLehenetsiz(motaId);
+				}
+
+				JsonObject jsonErantzuna = gson.fromJson(erantzuna, JsonObject.class);
+
+				if (jsonErantzuna.has("aurkituta") && jsonErantzuna.get("aurkituta").getAsBoolean()) {
+					JsonObject tipoJson = jsonErantzuna.getAsJsonObject("tipo");
+					return tipoJson.has("name") && !tipoJson.get("name").isJsonNull()
+							? tipoJson.get("name").getAsString()
+							: getMotaIzenaLehenetsiz(motaId);
+				}
+
+				return getMotaIzenaLehenetsiz(motaId);
 			}
-
-			JsonObject jsonRespuesta = gson.fromJson(respuesta, JsonObject.class);
-
-			if (jsonRespuesta.has("aurkituta") && jsonRespuesta.get("aurkituta").getAsBoolean()) {
-				JsonObject tipoJson = jsonRespuesta.getAsJsonObject("tipo");
-				return tipoJson.has("name") && !tipoJson.get("name").isJsonNull() ? tipoJson.get("name").getAsString()
-						: getTipoNombrePorDefecto(tipoId);
-			}
-
-			return getTipoNombrePorDefecto(tipoId);
-
 		} catch (Exception e) {
-			System.err.println("Error obteniendo tipo: " + e.getMessage());
-			return getTipoNombrePorDefecto(tipoId);
-
-		} finally {
-			cerrarSocket(socket);
+			System.err.println("Errorea mota lortzean: " + e.getMessage());
+			return getMotaIzenaLehenetsiz(motaId);
 		}
 	}
 
-	/**
-	 * Obtiene nombre de tipo por defecto según ID
-	 */
-	private String getTipoNombrePorDefecto(long tipoId) {
-		switch ((int) tipoId) {
-		case 1:
-			return "God";
-		case 2:
-			return "Administrador";
-		case 3:
-			return "Profesor";
-		case 4:
-			return "Alumno";
-		default:
-			return "Usuario";
-		}
+	private String getMotaIzenaLehenetsiz(long motaId) {
+		return switch ((int) motaId) {
+		case 1 -> "God";
+		case 2 -> "Administratzailea";
+		case 3 -> "Irakaslea";
+		case 4 -> "Ikaslea";
+		default -> "Erabiltzailea";
+		};
 	}
 
-	/**
-	 * Convierte un JsonObject a UserProfileData
-	 */
-	private UserProfileData jsonToUserProfileData(JsonObject userJson) {
+	private ErabiltzaileProfilData jsonToErabiltzaileProfilData(JsonObject userJson) {
 		Long id = userJson.get("id").getAsLong();
 		String email = userJson.get("email").getAsString();
-		String username = userJson.get("username").getAsString();
+		String erabiltzaileIzena = userJson.get("username").getAsString();
 
-		String nombre = userJson.has("nombre") && !userJson.get("nombre").isJsonNull()
+		String izena = userJson.has("nombre") && !userJson.get("nombre").isJsonNull()
 				? userJson.get("nombre").getAsString()
 				: "";
 
-		String apellidos = userJson.has("apellidos") && !userJson.get("apellidos").isJsonNull()
+		String abizenak = userJson.has("apellidos") && !userJson.get("apellidos").isJsonNull()
 				? userJson.get("apellidos").getAsString()
 				: "";
 
 		String dni = userJson.has("dni") && !userJson.get("dni").isJsonNull() ? userJson.get("dni").getAsString() : "";
 
-		String direccion = userJson.has("direccion") && !userJson.get("direccion").isJsonNull()
+		String helbidea = userJson.has("direccion") && !userJson.get("direccion").isJsonNull()
 				? userJson.get("direccion").getAsString()
 				: "";
 
-		String telefono1 = userJson.has("telefono1") && !userJson.get("telefono1").isJsonNull()
+		String telefonoa1 = userJson.has("telefono1") && !userJson.get("telefono1").isJsonNull()
 				? userJson.get("telefono1").getAsString()
 				: "";
 
-		String telefono2 = userJson.has("telefono2") && !userJson.get("telefono2").isJsonNull()
+		String telefonoa2 = userJson.has("telefono2") && !userJson.get("telefono2").isJsonNull()
 				? userJson.get("telefono2").getAsString()
 				: "";
 
-		Integer tipoId = userJson.get("tipoId").getAsInt();
+		Integer mota = userJson.get("tipoId").getAsInt();
 
 		String argazkiaUrl = userJson.has("argazkiaUrl") && !userJson.get("argazkiaUrl").isJsonNull()
 				? userJson.get("argazkiaUrl").getAsString()
 				: null;
 
-		return new UserProfileData(id, email, username, nombre, apellidos, dni, direccion, telefono1, telefono2, tipoId,
-				argazkiaUrl);
+		return new ErabiltzaileProfilData(id, email, erabiltzaileIzena, izena, abizenak, dni, helbidea, telefonoa1,
+				telefonoa2, mota, argazkiaUrl);
 	}
 
-	/**
-	 * Cierra el socket de forma segura
-	 */
-	private void cerrarSocket(Socket socket) {
-		if (socket != null && !socket.isClosed()) {
-			try {
-				socket.close();
-			} catch (IOException e) {
-				System.err.println("Error al cerrar socket: " + e.getMessage());
-			}
-		}
-	}
+	public static final class ErabiltzaileProfilData {
+		private final Long id;
+		private final String email;
+		private final String erabiltzaileIzena;
+		private final String izena;
+		private final String abizenak;
+		private final String dni;
+		private final String helbidea;
+		private final String telefonoa1;
+		private final String telefonoa2;
+		private final Integer mota;
+		private final String argazkiaUrl;
 
-	/**
-	 * Clase para almacenar datos completos del perfil de usuario
-	 */
-	public static class UserProfileData {
-		private Long id;
-		private String email;
-		private String username;
-		private String nombre;
-		private String apellidos;
-		private String dni;
-		private String direccion;
-		private String telefono1;
-		private String telefono2;
-		private Integer tipoId;
-		private String argazkiaUrl;
-
-		public UserProfileData(Long id, String email, String username, String nombre, String apellidos, String dni,
-				String direccion, String telefono1, String telefono2, Integer tipoId, String argazkiaUrl) {
+		public ErabiltzaileProfilData(Long id, String email, String erabiltzaileIzena, String izena, String abizenak,
+				String dni, String helbidea, String telefonoa1, String telefonoa2, Integer mota, String argazkiaUrl) {
 			this.id = id;
 			this.email = email;
-			this.username = username;
-			this.nombre = nombre;
-			this.apellidos = apellidos;
+			this.erabiltzaileIzena = erabiltzaileIzena;
+			this.izena = izena;
+			this.abizenak = abizenak;
 			this.dni = dni;
-			this.direccion = direccion;
-			this.telefono1 = telefono1;
-			this.telefono2 = telefono2;
-			this.tipoId = tipoId;
+			this.helbidea = helbidea;
+			this.telefonoa1 = telefonoa1;
+			this.telefonoa2 = telefonoa2;
+			this.mota = mota;
 			this.argazkiaUrl = argazkiaUrl;
 		}
 
-		// Getters
 		public Long getId() {
 			return id;
 		}
@@ -246,68 +185,63 @@ public class Profile {
 			return email;
 		}
 
-		public String getUsername() {
-			return username;
+		public String getErabiltzaileIzena() {
+			return erabiltzaileIzena;
 		}
 
-		public String getNombre() {
-			return nombre;
+		public String getIzena() {
+			return izena;
 		}
 
-		public String getApellidos() {
-			return apellidos;
+		public String getAbizenak() {
+			return abizenak;
 		}
 
 		public String getDni() {
 			return dni;
 		}
 
-		public String getDireccion() {
-			return direccion;
+		public String getHelbidea() {
+			return helbidea;
 		}
 
-		public String getTelefono1() {
-			return telefono1;
+		public String getTelefonoa1() {
+			return telefonoa1;
 		}
 
-		public String getTelefono2() {
-			return telefono2;
+		public String getTelefonoa2() {
+			return telefonoa2;
 		}
 
-		public Integer getTipoId() {
-			return tipoId;
+		public Integer getMota() {
+			return mota;
 		}
 
 		public String getArgazkiaUrl() {
 			return argazkiaUrl;
 		}
 
-		public String getNombreCompleto() {
-			if (nombre.isEmpty() && apellidos.isEmpty()) {
-				return username;
+		public String getIzenOsoa() {
+			if (izena.isEmpty() && abizenak.isEmpty()) {
+				return erabiltzaileIzena;
 			}
-			return (nombre + " " + apellidos).trim();
+			return (izena + " " + abizenak).trim();
 		}
 
-		public String getTipoNombre() {
-			switch (tipoId) {
-			case 1:
-				return "God";
-			case 2:
-				return "Administrador";
-			case 3:
-				return "Profesor";
-			case 4:
-				return "Alumno";
-			default:
-				return "Usuario";
-			}
+		public String getMotaIzena() {
+			return switch (mota) {
+			case 1 -> "God";
+			case 2 -> "Administratzailea";
+			case 3 -> "Irakaslea";
+			case 4 -> "Ikaslea";
+			default -> "Erabiltzailea";
+			};
 		}
 
 		@Override
 		public String toString() {
-			return "UserProfileData{" + "id=" + id + ", email='" + email + '\'' + ", nombre='" + getNombreCompleto()
-					+ '\'' + ", tipoId=" + tipoId + '}';
+			return "ErabiltzaileProfilData{" + "id=" + id + ", email='" + email + '\'' + ", izena='" + getIzenOsoa()
+					+ '\'' + ", mota=" + mota + '}';
 		}
 	}
 }

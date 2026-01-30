@@ -5,13 +5,12 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
@@ -20,24 +19,19 @@ import javax.swing.border.EmptyBorder;
 import utils.CheckLogin;
 import utils.SessionManager;
 
-public class FirstView extends JFrame {
-
+public final class FirstView extends JFrame {
 	private static final long serialVersionUID = 1L;
-	private JPanel contentPane;
-	private JTextField userField;
-	private JPasswordField passwordField;
-	private String user;
-	private String password;
+	private final JPanel edukiPanel;
+	private final JTextField erabiltzaileEremua;
+	private final JPasswordField pasahitzaEremua;
 
 	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					FirstView frame = new FirstView();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		EventQueue.invokeLater(() -> {
+			try {
+				FirstView markoa = new FirstView();
+				markoa.setVisible(true);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		});
 	}
@@ -47,114 +41,128 @@ public class FirstView extends JFrame {
 		setTitle("Login - EE Software");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 800, 600);
-		contentPane = new JPanel();
-		contentPane.setBackground(new Color(240, 240, 240));
-		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		setContentPane(contentPane);
-		contentPane.setLayout(null);
 
-		// Title label
-		JLabel lblTitle = new JLabel("Sistema de Gestión Escolar");
-		lblTitle.setFont(new Font("Tahoma", Font.BOLD, 28));
-		lblTitle.setForeground(new Color(51, 102, 153));
-		lblTitle.setBounds(200, 30, 400, 50);
-		contentPane.add(lblTitle);
+		edukiPanel = new JPanel();
+		edukiPanel.setBackground(new Color(240, 240, 240));
+		edukiPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+		edukiPanel.setLayout(null);
+		setContentPane(edukiPanel);
 
-		// Logo section
-		JLabel lblLogo = new JLabel();
-		lblLogo.setOpaque(true);
-		lblLogo.setBackground(Color.WHITE);
-		lblLogo.setBounds(300, 100, 200, 120);
-		ImageIcon logoIcon = new ImageIcon(getClass().getResource("/img/elorrieta.png"));
-		Image logoImage = logoIcon.getImage().getScaledInstance(200, 120, Image.SCALE_SMOOTH);
-		lblLogo.setIcon(new ImageIcon(logoImage));
-		contentPane.add(lblLogo);
+		gehituIzenburua();
+		gehituLogoa();
 
-		// Login form section
-		JLabel lblNewLabel = new JLabel("Erabiltzailea:");
-		lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 16));
-		lblNewLabel.setForeground(new Color(51, 102, 153));
-		lblNewLabel.setBounds(250, 260, 120, 25);
-		contentPane.add(lblNewLabel);
+		JLabel lblErabiltzailea = sortuEtiketa("Erabiltzailea:", 250, 260);
+		edukiPanel.add(lblErabiltzailea);
 
-		userField = new JTextField();
-		userField.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		userField.setBounds(250, 285, 300, 35);
-		userField.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+		erabiltzaileEremua = sortuTestuEremua(250, 285);
+		edukiPanel.add(erabiltzaileEremua);
+
+		JLabel lblPasahitza = sortuEtiketa("Pasahitza:", 250, 340);
+		edukiPanel.add(lblPasahitza);
+
+		pasahitzaEremua = sortuPasahitzaEremua(250, 365);
+		edukiPanel.add(pasahitzaEremua);
+
+		JButton btnLogin = sortuLoginBotoia();
+		edukiPanel.add(btnLogin);
+
+		gehituOinIzenburua();
+	}
+
+	private void gehituIzenburua() {
+		JLabel izenburua = new JLabel("Eskola Kudeaketa Sistema");
+		izenburua.setFont(new Font("Tahoma", Font.BOLD, 28));
+		izenburua.setForeground(new Color(51, 102, 153));
+		izenburua.setBounds(200, 30, 400, 50);
+		edukiPanel.add(izenburua);
+	}
+
+	private void gehituLogoa() {
+		JLabel lblLogoa = new JLabel();
+		lblLogoa.setOpaque(true);
+		lblLogoa.setBackground(Color.WHITE);
+		lblLogoa.setBounds(300, 100, 200, 120);
+
+		ImageIcon logoIkonoa = new ImageIcon(getClass().getResource("/img/elorrieta.png"));
+		Image logoIrudia = logoIkonoa.getImage().getScaledInstance(200, 120, Image.SCALE_SMOOTH);
+		lblLogoa.setIcon(new ImageIcon(logoIrudia));
+		edukiPanel.add(lblLogoa);
+	}
+
+	private JLabel sortuEtiketa(String testua, int x, int y) {
+		JLabel etiketa = new JLabel(testua);
+		etiketa.setFont(new Font("Tahoma", Font.BOLD, 16));
+		etiketa.setForeground(new Color(51, 102, 153));
+		etiketa.setBounds(x, y, 120, 25);
+		return etiketa;
+	}
+
+	private JTextField sortuTestuEremua(int x, int y) {
+		JTextField eremua = new JTextField();
+		eremua.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		eremua.setBounds(x, y, 300, 35);
+		eremua.setBorder(javax.swing.BorderFactory.createCompoundBorder(
 				javax.swing.BorderFactory.createLineBorder(new Color(70, 130, 180), 2),
 				javax.swing.BorderFactory.createEmptyBorder(5, 10, 5, 10)));
-		contentPane.add(userField);
-		userField.setColumns(10);
+		eremua.setColumns(10);
+		return eremua;
+	}
 
-		JLabel lblPasahitza = new JLabel("Pasahitza:");
-		lblPasahitza.setFont(new Font("Tahoma", Font.BOLD, 16));
-		lblPasahitza.setForeground(new Color(51, 102, 153));
-		lblPasahitza.setBounds(250, 340, 120, 25);
-		contentPane.add(lblPasahitza);
-
-		passwordField = new JPasswordField();
-		passwordField.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		passwordField.setBounds(250, 365, 300, 35);
-		passwordField.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+	private JPasswordField sortuPasahitzaEremua(int x, int y) {
+		JPasswordField eremua = new JPasswordField();
+		eremua.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		eremua.setBounds(x, y, 300, 35);
+		eremua.setBorder(javax.swing.BorderFactory.createCompoundBorder(
 				javax.swing.BorderFactory.createLineBorder(new Color(70, 130, 180), 2),
 				javax.swing.BorderFactory.createEmptyBorder(5, 10, 5, 10)));
-		contentPane.add(passwordField);
+		return eremua;
+	}
 
-		JButton btnLogin = new JButton("Login");
+	private JButton sortuLoginBotoia() {
+		JButton btnLogin = new JButton("Sartu");
 		btnLogin.setFont(new Font("Tahoma", Font.BOLD, 16));
 		btnLogin.setBackground(new Color(70, 130, 180));
 		btnLogin.setForeground(Color.WHITE);
 		btnLogin.setBounds(350, 430, 100, 45);
 		btnLogin.setFocusPainted(false);
-		contentPane.add(btnLogin);
 
-		// Footer info
-		JLabel lblFooter = new JLabel("Elorrieta Erreka Mari BHI");
-		lblFooter.setFont(new Font("Tahoma", Font.ITALIC, 12));
-		lblFooter.setForeground(new Color(102, 102, 102));
-		lblFooter.setBounds(320, 520, 200, 20);
-		contentPane.add(lblFooter);
+		btnLogin.addActionListener(e -> {
+			String erabiltzailea = erabiltzaileEremua.getText();
+			String pasahitza = new String(pasahitzaEremua.getPassword());
 
-		// Button Listener
-		// En FirstView.java, actualizar el ActionListener del botón login:
+			btnLogin.setEnabled(false);
+			btnLogin.setText("Balidatzen...");
 
-		btnLogin.addActionListener(new ActionListener() {
-		    @SuppressWarnings("deprecation")
-		    public void actionPerformed(ActionEvent e) {
-		        user = userField.getText();
-		        password = passwordField.getText();
-		        
-		        btnLogin.setEnabled(false);
-		        btnLogin.setText("Validando...");
-		        
-		        new Thread(() -> {
-		            CheckLogin checkLogin = new CheckLogin();
-		            CheckLogin.LoginResponse response = checkLogin.validarLogin(user, password);
-		            
-		            EventQueue.invokeLater(() -> {
-		                if (response.isExitoso()) {
-		                    // Guardar sesión
-		                    SessionManager.getInstance().iniciarSesion(response.getUsuario());
-		                    
-		                    System.out.println("Login exitoso: " + response.getUsuario().getNombreCompleto());
-		                    dispose();
-		                    Menu menu = new Menu(response.getUsuario().getUsername());
-		                    menu.setVisible(true);
-		                } else {
-		                    btnLogin.setEnabled(true);
-		                    btnLogin.setText("Login");
-		                    
-		                    javax.swing.JOptionPane.showMessageDialog(
-		                        FirstView.this,
-		                        response.getMensaje(),
-		                        "Error de Login",
-		                        javax.swing.JOptionPane.ERROR_MESSAGE
-		                    );
-		                }
-		            });
-		        }).start();
-		    }
+			new Thread(() -> {
+				CheckLogin checkLogin = new CheckLogin();
+				CheckLogin.LoginErantzuna erantzuna = checkLogin.balidatuLogin(erabiltzailea, pasahitza);
+
+				EventQueue.invokeLater(() -> {
+					if (erantzuna.isArrakastatsua()) {
+						SessionManager.getInstance().saioaHasi(erantzuna.getErabiltzailea());
+
+						System.out.println("Login arrakastatsua: " + erantzuna.getErabiltzailea().getIzenOsoa());
+						dispose();
+						new Menua(erantzuna.getErabiltzailea().getErabiltzaileIzena()).setVisible(true);
+					} else {
+						btnLogin.setEnabled(true);
+						btnLogin.setText("Sartu");
+
+						JOptionPane.showMessageDialog(FirstView.this, erantzuna.getMezua(), "Login Errorea",
+								JOptionPane.ERROR_MESSAGE);
+					}
+				});
+			}).start();
 		});
 
+		return btnLogin;
+	}
+
+	private void gehituOinIzenburua() {
+		JLabel oinIzenburua = new JLabel("Elorrieta Erreka Mari BHI");
+		oinIzenburua.setFont(new Font("Tahoma", Font.ITALIC, 12));
+		oinIzenburua.setForeground(new Color(102, 102, 102));
+		oinIzenburua.setBounds(320, 520, 200, 20);
+		edukiPanel.add(oinIzenburua);
 	}
 }

@@ -23,366 +23,251 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
-/**
- * Componente reutilizable para mostrar listas de usuarios (alumnos o
- * profesores) Permite selección de usuarios y proporciona funcionalidad de
- * scroll para listas largas
- */
-public class UserListTable extends JPanel {
+public final class UserListTable extends JPanel {
+    private static final long serialVersionUID = 1L;
+    
+    public static final Color IKASLE_KOLOREA = new Color(70, 130, 180);
+    public static final Color IRAKASLE_KOLOREA = new Color(34, 139, 34);
+    public static final Color HAUTATUTAKO_ERRENKADA = new Color(255, 215, 0);
+    public static final Color TXANDAKATUTAKO_ERRENKADA = new Color(248, 248, 248);
 
-	private static final long serialVersionUID = 1L;
-	private JTable table;
-	private DefaultTableModel tableModel;
-	private List<UserSelectionListener> selectionListeners;
-	private int selectedUserId = -1;
-	private String userType = "Usuarios"; // "Alumnos", "Profesores", o "Usuarios"
+    private final JTable tabla;
+    private final DefaultTableModel taulaModeloa;
+    private final List<ErabiltzaileHautatzeEntzulea> hautatzaileEntzuleak;
+    private final String[] zutabeIzenak = { "ID", "Izena", "Abizenak", "Emaila", "Mota" };
+    
+    private int hautatutakoErabiltzaileId = -1;
+    private String erabiltzaileMota;
 
-	// Colores predefinidos para diferentes tipos de usuarios
-	public static final Color STUDENT_COLOR = new Color(70, 130, 180); // Azul - Alumno
-	public static final Color TEACHER_COLOR = new Color(34, 139, 34); // Verde - Profesor
-	public static final Color SELECTED_ROW = new Color(255, 215, 0); // Dorado - Fila seleccionada
-	public static final Color ALTERNATE_ROW = new Color(248, 248, 248); // Gris muy claro - Filas alternas
+    public UserListTable() {
+        this("Erabiltzaileak");
+    }
 
-	private String[] columnNames = { "ID", "Nombre", "Apellidos", "Email", "Tipo" };
+    public UserListTable(String erabiltzaileMota) {
+        this.erabiltzaileMota = erabiltzaileMota;
+        this.hautatzaileEntzuleak = new ArrayList<>();
+        
+        setLayout(new BorderLayout());
+        
+        taulaModeloa = new DefaultTableModel(zutabeIzenak, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
 
-	/**
-	 * Constructor por defecto
-	 */
-	public UserListTable() {
-		this("Usuarios");
-	}
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                return columnIndex == 0 ? Integer.class : String.class;
+            }
+        };
 
-	/**
-	 * Constructor con tipo de usuario específico
-	 * 
-	 * @param userType Tipo de usuarios a mostrar ("Alumnos", "Profesores",
-	 *                 "Usuarios")
-	 */
-	public UserListTable(String userType) {
-		this.userType = userType;
-		this.selectionListeners = new ArrayList<>();
-		initializeComponents();
-		setupTable();
-	}
+        tabla = new JTable(taulaModeloa);
+        konfiguratuTabla();
+        
+        add(sortuGoiburua(), BorderLayout.NORTH);
+        add(sortuTaulaPanela(), BorderLayout.CENTER);
+        add(sortuInformazioPanela(), BorderLayout.SOUTH);
+    }
 
-	private void initializeComponents() {
-		setLayout(new BorderLayout());
+    private void konfiguratuTabla() {
+        tabla.setRowHeight(35);
+        tabla.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        tabla.getTableHeader().setFont(new Font("Tahoma", Font.BOLD, 14));
+        tabla.getTableHeader().setBackground(new Color(51, 102, 153));
+        tabla.getTableHeader().setForeground(Color.WHITE);
 
-		// Crear modelo de tabla
-		tableModel = new DefaultTableModel(columnNames, 0) {
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				return false; // Tabla no editable
-			}
+        TableColumnModel zutabeModeloa = tabla.getColumnModel();
+        zutabeModeloa.getColumn(0).setPreferredWidth(50);
+        zutabeModeloa.getColumn(1).setPreferredWidth(120);
+        zutabeModeloa.getColumn(2).setPreferredWidth(150);
+        zutabeModeloa.getColumn(3).setPreferredWidth(200);
+        zutabeModeloa.getColumn(4).setPreferredWidth(80);
 
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				if (columnIndex == 0) {
-					return Integer.class; // ID como entero para ordenación correcta
-				}
-				return String.class;
-			}
-		};
+        tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tabla.setRowSelectionAllowed(true);
+        tabla.setColumnSelectionAllowed(false);
 
-		table = new JTable(tableModel);
-	}
+        tabla.setDefaultRenderer(Object.class, new ErabiltzaileGelaxkaErrendatzailea());
+        tabla.setDefaultRenderer(Integer.class, new ErabiltzaileGelaxkaErrendatzailea());
 
-	private void setupTable() {
-		// Configuración básica de la tabla
-		table.setRowHeight(35);
-		table.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		table.getTableHeader().setFont(new Font("Tahoma", Font.BOLD, 14));
-		table.getTableHeader().setBackground(new Color(51, 102, 153));
-		table.getTableHeader().setForeground(Color.WHITE);
+        tabla.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 1) {
+                    int hautatutakoErrenkada = tabla.getSelectedRow();
+                    if (hautatutakoErrenkada >= 0) {
+                        hautatutakoErabiltzaileId = (Integer) taulaModeloa.getValueAt(hautatutakoErrenkada, 0);
+                        String erabiltzaileIzena = taulaModeloa.getValueAt(hautatutakoErrenkada, 1) + " " +
+                                                   taulaModeloa.getValueAt(hautatutakoErrenkada, 2);
+                        String motaHautatua = (String) taulaModeloa.getValueAt(hautatutakoErrenkada, 4);
 
-		// Configurar ancho de columnas
-		TableColumnModel columnModel = table.getColumnModel();
-		columnModel.getColumn(0).setPreferredWidth(50); // ID
-		columnModel.getColumn(1).setPreferredWidth(120); // Nombre
-		columnModel.getColumn(2).setPreferredWidth(150); // Apellidos
-		columnModel.getColumn(3).setPreferredWidth(200); // Email
-		columnModel.getColumn(4).setPreferredWidth(80); // Tipo
+                        jakinaraziErabiltzaileaHautatua(hautatutakoErabiltzaileId, erabiltzaileIzena, motaHautatua);
+                        tabla.repaint();
+                    }
+                }
+            }
+        });
 
-		// Configurar selección
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.setRowSelectionAllowed(true);
-		table.setColumnSelectionAllowed(false);
+        tabla.setAutoCreateRowSorter(true);
+    }
 
-		// Renderer personalizado para colores de filas
-		table.setDefaultRenderer(Object.class, new UserCellRenderer());
-		table.setDefaultRenderer(Integer.class, new UserCellRenderer());
+    private JLabel sortuGoiburua() {
+        JLabel izenburua = new JLabel(erabiltzaileMota + "en Zerrenda", JLabel.CENTER);
+        izenburua.setFont(new Font("Tahoma", Font.BOLD, 18));
+        izenburua.setForeground(new Color(51, 102, 153));
+        izenburua.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        return izenburua;
+    }
 
-		// Listener para selección de filas
-		table.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 1) {
-					int selectedRow = table.getSelectedRow();
-					if (selectedRow >= 0) {
-						selectedUserId = (Integer) tableModel.getValueAt(selectedRow, 0);
-						String userName = (String) tableModel.getValueAt(selectedRow, 1) + " "
-								+ (String) tableModel.getValueAt(selectedRow, 2);
-						String userTypeSelected = (String) tableModel.getValueAt(selectedRow, 4);
+    private JScrollPane sortuTaulaPanela() {
+        JScrollPane scrollPane = new JScrollPane(tabla);
+        scrollPane.setPreferredSize(new Dimension(700, 400));
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        return scrollPane;
+    }
 
-						// Notificar a los listeners
-						notifyUserSelected(selectedUserId, userName, userTypeSelected);
-						table.repaint();
-					}
-				}
-			}
-		});
+    private JPanel sortuInformazioPanela() {
+        JPanel infoPanel = new JPanel(new FlowLayout());
+        infoPanel.setBorder(BorderFactory.createTitledBorder("Informazioa"));
 
-		// Permitir ordenación por columnas
-		table.setAutoCreateRowSorter(true);
+        infoPanel.add(sortuInfoElementua("Ikaslea", IKASLE_KOLOREA));
+        infoPanel.add(sortuInfoElementua("Irakaslea", IRAKASLE_KOLOREA));
 
-		// Añadir la tabla con scroll
-		JScrollPane scrollPane = new JScrollPane(table);
-		scrollPane.setPreferredSize(new Dimension(700, 400));
-		scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		add(scrollPane, BorderLayout.CENTER);
+        JLabel argibideak = new JLabel("Egin klik errenkada batean erabiltzaile bat hautatzeko");
+        argibideak.setFont(new Font("Tahoma", Font.ITALIC, 11));
+        argibideak.setForeground(Color.GRAY);
+        infoPanel.add(argibideak);
 
-		// Título de la tabla
-		JLabel titleLabel = new JLabel("Lista de " + userType, JLabel.CENTER);
-		titleLabel.setFont(new Font("Tahoma", Font.BOLD, 18));
-		titleLabel.setForeground(new Color(51, 102, 153));
-		titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-		add(titleLabel, BorderLayout.NORTH);
+        return infoPanel;
+    }
 
-		// Panel de información
-		add(createInfoPanel(), BorderLayout.SOUTH);
-	}
+    private JPanel sortuInfoElementua(String testua, Color kolorea) {
+        JPanel elementua = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
 
-	private JPanel createInfoPanel() {
-		JPanel infoPanel = new JPanel(new FlowLayout());
-		infoPanel.setBorder(BorderFactory.createTitledBorder("Información"));
+        JPanel koloreKoadroa = new JPanel();
+        koloreKoadroa.setBackground(kolorea);
+        koloreKoadroa.setPreferredSize(new Dimension(15, 15));
+        koloreKoadroa.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-		infoPanel.add(createInfoItem("Estudiante", STUDENT_COLOR));
-		infoPanel.add(createInfoItem("Profesor", TEACHER_COLOR));
+        JLabel etiketa = new JLabel(testua);
+        etiketa.setFont(new Font("Tahoma", Font.PLAIN, 11));
 
-		JLabel instructionLabel = new JLabel("Haga clic en una fila para seleccionar un usuario");
-		instructionLabel.setFont(new Font("Tahoma", Font.ITALIC, 11));
-		instructionLabel.setForeground(Color.GRAY);
-		infoPanel.add(instructionLabel);
+        elementua.add(koloreKoadroa);
+        elementua.add(etiketa);
 
-		return infoPanel;
-	}
+        return elementua;
+    }
 
-	private JPanel createInfoItem(String text, Color color) {
-		JPanel item = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    public void gehituErabiltzailea(int id, String izena, String abizenak, String emaila, String mota) {
+        Object[] errenkada = { id, izena, abizenak, emaila, mota };
+        taulaModeloa.addRow(errenkada);
+    }
 
-		JPanel colorBox = new JPanel();
-		colorBox.setBackground(color);
-		colorBox.setPreferredSize(new Dimension(15, 15));
-		colorBox.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+    public void garbituerabiltzaileak() {
+        taulaModeloa.setRowCount(0);
+        hautatutakoErabiltzaileId = -1;
+    }
 
-		JLabel label = new JLabel(text);
-		label.setFont(new Font("Tahoma", Font.PLAIN, 11));
+    public void kargatuErabiltzaileak(List<Object[]> erabiltzaileak) {
+        garbituerabiltzaileak();
+        erabiltzaileak.forEach(taulaModeloa::addRow);
+    }
 
-		item.add(colorBox);
-		item.add(label);
+    public int getHautatutakoErabiltzaileId() {
+        return hautatutakoErabiltzaileId;
+    }
 
-		return item;
-	}
+    public Object[] getHautatutakoErabiltzaileInfo() {
+        int hautatutakoErrenkada = tabla.getSelectedRow();
+        if (hautatutakoErrenkada >= 0) {
+            Object[] erabiltzaileInfo = new Object[5];
+            for (int i = 0; i < 5; i++) {
+                erabiltzaileInfo[i] = taulaModeloa.getValueAt(hautatutakoErrenkada, i);
+            }
+            return erabiltzaileInfo;
+        }
+        return null;
+    }
 
-	/**
-	 * Añade un usuario a la tabla
-	 * 
-	 * @param id        ID del usuario
-	 * @param nombre    Nombre del usuario
-	 * @param apellidos Apellidos del usuario
-	 * @param email     Email del usuario
-	 * @param tipo      Tipo de usuario ("Alumno" o "Profesor")
-	 */
-	public void addUser(int id, String nombre, String apellidos, String email, String tipo) {
-		Object[] row = { id, nombre, apellidos, email, tipo };
-		tableModel.addRow(row);
-	}
+    public void ezarriErabiltzaileMota(String erabiltzaileMota) {
+        this.erabiltzaileMota = erabiltzaileMota;
+        Component[] osagaiak = getComponents();
+        for (Component comp : osagaiak) {
+            if (comp instanceof JLabel) {
+                ((JLabel) comp).setText(erabiltzaileMota + "en Zerrenda");
+                break;
+            }
+        }
+    }
 
-	/**
-	 * Limpia todos los usuarios de la tabla
-	 */
-	public void clearUsers() {
-		tableModel.setRowCount(0);
-		selectedUserId = -1;
-	}
+    public void gehituErabiltzaileHautatzeEntzulea(ErabiltzaileHautatzeEntzulea entzulea) {
+        hautatzaileEntzuleak.add(entzulea);
+    }
 
-	/**
-	 * Carga una lista de usuarios en la tabla
-	 * 
-	 * @param users Lista de arrays de objetos con datos de usuarios
-	 */
-	public void loadUsers(List<Object[]> users) {
-		clearUsers();
-		for (Object[] user : users) {
-			tableModel.addRow(user);
-		}
-	}
+    public void kenduErabiltzaileHautatzeEntzulea(ErabiltzaileHautatzeEntzulea entzulea) {
+        hautatzaileEntzuleak.remove(entzulea);
+    }
 
-	/**
-	 * Obtiene el ID del usuario seleccionado
-	 * 
-	 * @return ID del usuario seleccionado, -1 si no hay selección
-	 */
-	public int getSelectedUserId() {
-		return selectedUserId;
-	}
+    private void jakinaraziErabiltzaileaHautatua(int erabiltzaileId, String erabiltzaileIzena, String erabiltzaileMota) {
+        hautatzaileEntzuleak.forEach(entzulea -> 
+            entzulea.erabiltzaileaHautatuDa(erabiltzaileId, erabiltzaileIzena, erabiltzaileMota));
+    }
 
-	/**
-	 * Obtiene la información completa del usuario seleccionado
-	 * 
-	 * @return Array con [ID, Nombre, Apellidos, Email, Tipo] o null si no hay
-	 *         selección
-	 */
-	public Object[] getSelectedUserInfo() {
-		int selectedRow = table.getSelectedRow();
-		if (selectedRow >= 0) {
-			Object[] userInfo = new Object[5];
-			for (int i = 0; i < 5; i++) {
-				userInfo[i] = tableModel.getValueAt(selectedRow, i);
-			}
-			return userInfo;
-		}
-		return null;
-	}
+    public int getErabiltzaileKopurua() {
+        return taulaModeloa.getRowCount();
+    }
 
-	/**
-	 * Establece el tipo de usuarios mostrados en la tabla
-	 * 
-	 * @param userType Tipo de usuarios ("Alumnos", "Profesores", "Usuarios")
-	 */
-	public void setUserType(String userType) {
-		this.userType = userType;
-		// Actualizar el título
-		Component[] components = getComponents();
-		for (Component comp : components) {
-			if (comp instanceof JLabel) {
-				((JLabel) comp).setText("Lista de " + userType);
-				break;
-			}
-		}
-	}
+    public void iragaziErabiltzaileak(String bilaketaTerminoa) {
+        if (bilaketaTerminoa == null || bilaketaTerminoa.trim().isEmpty()) {
+            tabla.setRowSorter(new TableRowSorter<>(taulaModeloa));
+            return;
+        }
 
-	/**
-	 * Añade un listener para eventos de selección de usuario
-	 * 
-	 * @param listener Listener a añadir
-	 */
-	public void addUserSelectionListener(UserSelectionListener listener) {
-		selectionListeners.add(listener);
-	}
+        TableRowSorter<DefaultTableModel> ordenatzailea = new TableRowSorter<>(taulaModeloa);
+        ordenatzailea.setRowFilter(RowFilter.regexFilter("(?i)" + bilaketaTerminoa, 1, 2, 3));
+        tabla.setRowSorter(ordenatzailea);
+    }
 
-	/**
-	 * Remueve un listener de eventos de selección de usuario
-	 * 
-	 * @param listener Listener a remover
-	 */
-	public void removeUserSelectionListener(UserSelectionListener listener) {
-		selectionListeners.remove(listener);
-	}
+    private class ErabiltzaileGelaxkaErrendatzailea extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 1L;
 
-	/**
-	 * Notifica a todos los listeners sobre la selección de un usuario
-	 */
-	private void notifyUserSelected(int userId, String userName, String userType) {
-		for (UserSelectionListener listener : selectionListeners) {
-			listener.onUserSelected(userId, userName, userType);
-		}
-	}
+        @Override
+        public Component getTableCellRendererComponent(JTable tabla, Object balioa, boolean hautatua, 
+                boolean fokusDu, int errenkada, int zutabea) {
 
-	/**
-	 * Obtiene el número total de usuarios en la tabla
-	 * 
-	 * @return Número de usuarios
-	 */
-	public int getUserCount() {
-		return tableModel.getRowCount();
-	}
+            Component osagaia = super.getTableCellRendererComponent(tabla, balioa, hautatua, fokusDu, 
+                                                                    errenkada, zutabea);
 
-	/**
-	 * Busca usuarios por nombre o apellido
-	 * 
-	 * @param searchTerm Término de búsqueda
-	 */
-	public void filterUsers(String searchTerm) {
-		if (searchTerm == null || searchTerm.trim().isEmpty()) {
-			table.setRowSorter(new TableRowSorter<>(tableModel));
-			return;
-		}
+            String erabiltzaileMota = (String) tabla.getModel().getValueAt(errenkada, 4);
+            int erabiltzaileId = (Integer) tabla.getModel().getValueAt(errenkada, 0);
 
-		TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
-		sorter.setRowFilter(RowFilter.regexFilter("(?i)" + searchTerm, 1, 2, 3)); // Buscar en nombre, apellidos y email
-		table.setRowSorter(sorter);
-	}
+            if (erabiltzaileId == hautatutakoErabiltzaileId) {
+                osagaia.setBackground(HAUTATUTAKO_ERRENKADA);
+                osagaia.setForeground(Color.BLACK);
+            } else if (hautatua) {
+                osagaia.setBackground(tabla.getSelectionBackground());
+                osagaia.setForeground(tabla.getSelectionForeground());
+            } else {
+                if ("Irakaslea".equalsIgnoreCase(erabiltzaileMota)) {
+                    osagaia.setBackground(IRAKASLE_KOLOREA);
+                    osagaia.setForeground(Color.WHITE);
+                } else if ("Ikaslea".equalsIgnoreCase(erabiltzaileMota)) {
+                    osagaia.setBackground(IKASLE_KOLOREA);
+                    osagaia.setForeground(Color.WHITE);
+                } else {
+                    osagaia.setBackground(errenkada % 2 == 0 ? Color.WHITE : TXANDAKATUTAKO_ERRENKADA);
+                    osagaia.setForeground(Color.BLACK);
+                }
+            }
 
-	/**
-	 * Renderer personalizado para colorear las filas según el tipo de usuario
-	 */
-	private class UserCellRenderer extends DefaultTableCellRenderer {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
+            setHorizontalAlignment(zutabea == 0 ? JLabel.CENTER : JLabel.LEFT);
 
-		@Override
-		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-				int row, int column) {
+            return osagaia;
+        }
+    }
 
-			Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-			// Obtener el tipo de usuario de la fila
-			String userType = (String) table.getModel().getValueAt(row, 4);
-			int userId = (Integer) table.getModel().getValueAt(row, 0);
-
-			if (userId == selectedUserId) {
-				// Usuario seleccionado
-				component.setBackground(SELECTED_ROW);
-				component.setForeground(Color.BLACK);
-			} else if (isSelected) {
-				// Fila resaltada por hover
-				component.setBackground(table.getSelectionBackground());
-				component.setForeground(table.getSelectionForeground());
-			} else {
-				// Color según tipo de usuario
-				if ("Profesor".equalsIgnoreCase(userType)) {
-					component.setBackground(TEACHER_COLOR);
-					component.setForeground(Color.WHITE);
-				} else if ("Alumno".equalsIgnoreCase(userType)) {
-					component.setBackground(STUDENT_COLOR);
-					component.setForeground(Color.WHITE);
-				} else {
-					// Filas alternas para mejor legibilidad
-					if (row % 2 == 0) {
-						component.setBackground(Color.WHITE);
-					} else {
-						component.setBackground(ALTERNATE_ROW);
-					}
-					component.setForeground(Color.BLACK);
-				}
-			}
-
-			// Centrar el ID
-			if (column == 0) {
-				setHorizontalAlignment(JLabel.CENTER);
-			} else {
-				setHorizontalAlignment(JLabel.LEFT);
-			}
-
-			return component;
-		}
-	}
-
-	/**
-	 * Interface para listeners de selección de usuario
-	 */
-	public interface UserSelectionListener {
-		/**
-		 * Se llama cuando se selecciona un usuario
-		 * 
-		 * @param userId   ID del usuario seleccionado
-		 * @param userName Nombre completo del usuario
-		 * @param userType Tipo de usuario ("Alumno" o "Profesor")
-		 */
-		void onUserSelected(int userId, String userName, String userType);
-	}
+    public interface ErabiltzaileHautatzeEntzulea {
+        void erabiltzaileaHautatuDa(int erabiltzaileId, String erabiltzaileIzena, String erabiltzaileMota);
+    }
 }

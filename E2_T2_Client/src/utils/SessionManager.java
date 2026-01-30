@@ -1,51 +1,47 @@
 package utils;
 
-/**
- * Singleton para mantener la sesión del usuario actual
- */
-public class SessionManager {
-    
-    private static SessionManager instance;
-    private CheckLogin.UserData usuarioActual;
-    
+public final class SessionManager {
+    private static SessionManager instantzia;
+    private CheckLogin.ErabiltzaileData erabiltzaileaktuala;
+
     private SessionManager() {}
-    
-    public static SessionManager getInstance() {
-        if (instance == null) {
-            instance = new SessionManager();
+
+    public static synchronized SessionManager getInstance() {
+        if (instantzia == null) {
+            instantzia = new SessionManager();
         }
-        return instance;
+        return instantzia;
     }
-    
-    public void iniciarSesion(CheckLogin.UserData usuario) {
-        this.usuarioActual = usuario;
+
+    public void saioaHasi(CheckLogin.ErabiltzaileData erabiltzailea) {
+        this.erabiltzaileaktuala = erabiltzailea;
     }
-    
-    public CheckLogin.UserData getUsuarioActual() {
-        return usuarioActual;
+
+    public CheckLogin.ErabiltzaileData getErabiltzaileaktuala() {
+        return erabiltzaileaktuala;
     }
-    
-    public void cerrarSesion() {
-        this.usuarioActual = null;
+
+    public void saioaItxi() {
+        this.erabiltzaileaktuala = null;
     }
-    
-    public boolean haySesionActiva() {
-        return usuarioActual != null;
+
+    public boolean badagoSaioAktiboa() {
+        return erabiltzaileaktuala != null;
     }
-    
-    public Long getUserId() {
-        return usuarioActual != null ? usuarioActual.getId() : null;
+
+    public Long getErabiltzaileId() {
+        return erabiltzaileaktuala != null ? erabiltzaileaktuala.getId() : null;
     }
-    
-    public String getUserEmail() {
-        return usuarioActual != null ? usuarioActual.getEmail() : null;
+
+    public String getErabiltzaileEmaila() {
+        return erabiltzaileaktuala != null ? erabiltzaileaktuala.getEmail() : null;
     }
-    
-    public String getUserNombreCompleto() {
-        return usuarioActual != null ? usuarioActual.getNombreCompleto() : "Usuario";
+
+    public String getErabiltzaileIzenOsoa() {
+        return erabiltzaileaktuala != null ? erabiltzaileaktuala.getIzenOsoa() : "Erabiltzailea";
     }
-    
-    public Integer getUserTipoId() {
-        return usuarioActual != null ? usuarioActual.getTipoId() : null;
+
+    public Integer getErabiltzaileMota() {
+        return erabiltzaileaktuala != null ? erabiltzaileaktuala.getMota() : null;
     }
 }
