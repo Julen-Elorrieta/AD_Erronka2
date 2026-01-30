@@ -1,8 +1,13 @@
 package view;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -11,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
+import utils.GetAllUsers;
 import utils.UserListTable;
 
 public class Alumnos extends JFrame {
@@ -20,7 +26,11 @@ public class Alumnos extends JFrame {
 	private UserListTable userTable;
 	private JTextField searchField;
 	private JButton viewScheduleButton;
+	private JButton refreshButton;
 	private JLabel selectedUserLabel;
+	private JLabel statusLabel;
+	private JButton btnVolver;
+	private String currentUser;
 
 	/**
 	 * Launch the application.
@@ -56,7 +66,7 @@ public class Alumnos extends JFrame {
 		contentPane.add(userTable, BorderLayout.CENTER);
 
 		// Panel superior con búsqueda
-		JPanel topPanel = new JPanel(new FlowLayout());
+		JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JLabel searchLabel = new JLabel("Buscar:");
 		searchField = new JTextField(20);
 		searchField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -64,9 +74,32 @@ public class Alumnos extends JFrame {
 				userTable.filterUsers(searchField.getText());
 			}
 		});
+		
+		refreshButton = new JButton("🔄 Actualizar");
+		refreshButton.addActionListener(e -> cargarAlumnosDesdeServidor());
+		
+		statusLabel = new JLabel("Listo");
+		
 		topPanel.add(searchLabel);
 		topPanel.add(searchField);
+		topPanel.add(refreshButton);
+		topPanel.add(statusLabel);
 		contentPane.add(topPanel, BorderLayout.NORTH);
+		
+		btnVolver = new JButton("Volver");
+		btnVolver.setForeground(Color.WHITE);
+		btnVolver.setFont(new Font("Tahoma", Font.BOLD, 14));
+		btnVolver.setBackground(new Color(108, 117, 125));
+		topPanel.add(btnVolver);
+		
+		// Button listener
+		btnVolver.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dispose();
+				Menu menu = new Menu(currentUser);
+				menu.setVisible(true);
+			}
+		});
 
 		// Panel inferior con acciones
 		JPanel bottomPanel = new JPanel(new FlowLayout());
@@ -94,31 +127,88 @@ public class Alumnos extends JFrame {
 			viewScheduleButton.setEnabled(true);
 		});
 
-		// Cargar datos de ejemplo
-		loadSampleData();
+		// Cargar datos reales desde el servidor
+		cargarAlumnosDesdeServidor();
 	}
 
+	/**
+	 * Carga los alumnos desde el servidor Socket
+	 */
+	private void cargarAlumnosDesdeServidor() {
+		// Deshabilitar botón mientras carga
+		refreshButton.setEnabled(false);
+		statusLabel.setText("Cargando alumnos...");
+		
+		// Ejecutar en hilo separado para no bloquear la UI
+		new Thread(() -> {
+			try {
+				GetAllUsers client = new GetAllUsers();
+				
+				// Obtener solo alumnos (tipoId = 4)
+				List<GetAllUsers.UserData> alumnos = client.obtenerUsuariosPorTipo(4);
+				
+				// Actualizar UI en el hilo de eventos
+				EventQueue.invokeLater(() -> {
+					// Limpiar tabla
+					userTable.clearUsers();
+					
+					// Agregar alumnos a la tabla
+					for (GetAllUsers.UserData alumno : alumnos) {
+						userTable.addUser(
+							alumno.getId().intValue(),
+							alumno.getNombre(),
+							alumno.getApellidos(),
+							alumno.getEmail(),
+							alumno.getTipoNombre()
+						);
+					}
+					
+					// Actualizar estado
+					statusLabel.setText("✓ " + alumnos.size() + " alumnos cargados");
+					refreshButton.setEnabled(true);
+					
+					if (alumnos.isEmpty()) {
+						javax.swing.JOptionPane.showMessageDialog(
+							this,
+							"No se encontraron alumnos en el sistema.\n" +
+							"Verifica que el servidor esté ejecutándose.",
+							"Sin datos",
+							javax.swing.JOptionPane.WARNING_MESSAGE
+						);
+					}
+				});
+				
+			} catch (Exception e) {
+				// Manejar error en el hilo de eventos
+				EventQueue.invokeLater(() -> {
+					statusLabel.setText("❌ Error al cargar");
+					refreshButton.setEnabled(true);
+					
+					javax.swing.JOptionPane.showMessageDialog(
+						this,
+						"Error al conectar con el servidor:\n" + e.getMessage() +
+						"\n\nVerifica que el servidor esté ejecutándose en el puerto 6000.",
+						"Error de Conexión",
+						javax.swing.JOptionPane.ERROR_MESSAGE
+					);
+					
+					// Cargar datos de ejemplo como fallback
+					loadSampleData();
+				});
+			}
+		}).start();
+	}
+
+	/**
+	 * Datos de ejemplo (fallback)
+	 */
 	private void loadSampleData() {
-		// Datos de ejemplo de alumnos
+		userTable.clearUsers();
 		userTable.addUser(1, "Juan", "García López", "juan.garcia@elorrieta.com", "Alumno");
 		userTable.addUser(2, "María", "Fernández Silva", "maria.fernandez@elorrieta.com", "Alumno");
 		userTable.addUser(3, "Carlos", "Rodríguez Martín", "carlos.rodriguez@elorrieta.com", "Alumno");
 		userTable.addUser(4, "Ana", "López González", "ana.lopez@elorrieta.com", "Alumno");
 		userTable.addUser(5, "Pedro", "Sánchez Ruiz", "pedro.sanchez@elorrieta.com", "Alumno");
-		userTable.addUser(6, "Laura", "Martín Díez", "laura.martin@elorrieta.com", "Alumno");
-		userTable.addUser(7, "Diego", "Herrera Vega", "diego.herrera@elorrieta.com", "Alumno");
-		userTable.addUser(8, "Carmen", "Jiménez Moreno", "carmen.jimenez@elorrieta.com", "Alumno");
-		userTable.addUser(9, "Alberto", "Navarro Castillo", "alberto.navarro@elorrieta.com", "Alumno");
-		userTable.addUser(10, "Isabel", "Torres Ramos", "isabel.torres@elorrieta.com", "Alumno");
-		userTable.addUser(11, "Miguel", "Vargas Peña", "miguel.vargas@elorrieta.com", "Alumno");
-		userTable.addUser(12, "Lucía", "Mendoza Cruz", "lucia.mendoza@elorrieta.com", "Alumno");
-		userTable.addUser(13, "Rafael", "Ortega Luna", "rafael.ortega@elorrieta.com", "Alumno");
-		userTable.addUser(14, "Sofía", "Aguilar Flores", "sofia.aguilar@elorrieta.com", "Alumno");
-		userTable.addUser(15, "Andrés", "Castro Herrera", "andres.castro@elorrieta.com", "Alumno");
-
-		// Algunos profesores de ejemplo para mostrar la funcionalidad mixta
-		userTable.addUser(101, "Dr. José", "Pérez Docente", "jose.perez@elorrieta.com", "Profesor");
-		userTable.addUser(102, "Dra. Elena", "Morales Catedrática", "elena.morales@elorrieta.com", "Profesor");
+		statusLabel.setText("⚠ Datos de ejemplo (sin conexión)");
 	}
-
 }

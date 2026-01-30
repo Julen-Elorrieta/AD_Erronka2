@@ -138,6 +138,9 @@ public class Menu extends JFrame {
 
 		btnReuniones.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				dispose();
+				Reuniones reuniones = new Reuniones();
+				reuniones.setVisible(true);
 			}
 		});
 

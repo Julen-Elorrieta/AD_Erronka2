@@ -18,6 +18,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import utils.CheckLogin;
+import utils.SessionManager;
 
 public class FirstView extends JFrame {
 
@@ -40,7 +41,7 @@ public class FirstView extends JFrame {
 			}
 		});
 	}
-	
+
 	public FirstView() {
 		setIconImage(Toolkit.getDefaultToolkit().getImage(FirstView.class.getResource("/img/elorrieta.png")));
 		setTitle("Login - EE Software");
@@ -115,42 +116,44 @@ public class FirstView extends JFrame {
 		contentPane.add(lblFooter);
 
 		// Button Listener
+		// En FirstView.java, actualizar el ActionListener del botón login:
 
 		btnLogin.addActionListener(new ActionListener() {
-			@SuppressWarnings("deprecation")
-			public void actionPerformed(ActionEvent e) {
-				user = userField.getText();
-				password = passwordField.getText();
-
-				// Mostrar que está procesando (opcional)
-				btnLogin.setEnabled(false);
-				btnLogin.setText("Validando...");
-
-				// Validar en un hilo separado para no bloquear la UI
-				new Thread(() -> {
-					CheckLogin checkLogin = new CheckLogin();
-					CheckLogin.LoginResponse response = checkLogin.validarLogin(user, password);
-
-					// Volver al hilo de la UI para actualizar componentes
-					EventQueue.invokeLater(() -> {
-						if (response.isExitoso()) {
-							// Login exitoso
-							System.out.println("Login exitoso: " + response.getUsuario().getNombreCompleto());
-							dispose();
-							Menu menu = new Menu(response.getUsuario().getUsername());
-							menu.setVisible(true);
-						} else {
-							// Login fallido
-							btnLogin.setEnabled(true);
-							btnLogin.setText("Login");
-
-							// Mostrar mensaje de error
-							javax.swing.JOptionPane.showMessageDialog(FirstView.this, response.getMensaje(),
-									"Error de Login", javax.swing.JOptionPane.ERROR_MESSAGE);
-						}
-					});
-				}).start();
-			}
+		    @SuppressWarnings("deprecation")
+		    public void actionPerformed(ActionEvent e) {
+		        user = userField.getText();
+		        password = passwordField.getText();
+		        
+		        btnLogin.setEnabled(false);
+		        btnLogin.setText("Validando...");
+		        
+		        new Thread(() -> {
+		            CheckLogin checkLogin = new CheckLogin();
+		            CheckLogin.LoginResponse response = checkLogin.validarLogin(user, password);
+		            
+		            EventQueue.invokeLater(() -> {
+		                if (response.isExitoso()) {
+		                    // Guardar sesión
+		                    SessionManager.getInstance().iniciarSesion(response.getUsuario());
+		                    
+		                    System.out.println("Login exitoso: " + response.getUsuario().getNombreCompleto());
+		                    dispose();
+		                    Menu menu = new Menu(response.getUsuario().getUsername());
+		                    menu.setVisible(true);
+		                } else {
+		                    btnLogin.setEnabled(true);
+		                    btnLogin.setText("Login");
+		                    
+		                    javax.swing.JOptionPane.showMessageDialog(
+		                        FirstView.this,
+		                        response.getMensaje(),
+		                        "Error de Login",
+		                        javax.swing.JOptionPane.ERROR_MESSAGE
+		                    );
+		                }
+		            });
+		        }).start();
+		    }
 		});
 
 	}

@@ -12,11 +12,15 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+
+import utils.Profile;
+import utils.SessionManager;
 
 public class Perfil extends JFrame {
 
@@ -25,12 +29,19 @@ public class Perfil extends JFrame {
 	private JTextField textNombre;
 	private JTextField textApellidos;
 	private JTextField textEmail;
-	private JTextField textTelefono;
+	private JTextField textUsername;
+	private JTextField textDNI;
+	private JTextField textTelefono1;
+	private JTextField textTelefono2;
 	private JTextField textDireccion;
-	private JTextField textCargo;
-	private JTextField textDepartamento;
+	private JTextField textTipoUsuario;
 	private JLabel lblProfileImage;
+	private JLabel lblUsuarioId;
+	private JLabel lblStatus;
 	private String currentUser;
+	
+	private Profile profileClient;
+	private Profile.UserProfileData perfilActual;
 
 	/**
 	 * Launch the application.
@@ -53,11 +64,12 @@ public class Perfil extends JFrame {
 	 */
 	public Perfil(String user) {
 		this.currentUser = user;
+		this.profileClient = new Profile();
 
 		setIconImage(Toolkit.getDefaultToolkit().getImage(Perfil.class.getResource("/img/elorrieta.png")));
 		setTitle("Perfil de Usuario - EE Software");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 850, 650);
+		setBounds(100, 100, 900, 700);
 		contentPane = new JPanel();
 		contentPane.setBackground(new Color(240, 240, 240));
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -84,10 +96,14 @@ public class Perfil extends JFrame {
 		profileImagePanel.add(lblProfileImage);
 
 		// Load default profile image
-		ImageIcon profileIcon = new ImageIcon(Perfil.class.getResource("/img/ic_profile.png"));
-		Image profileImage = profileIcon.getImage().getScaledInstance(160, 160, Image.SCALE_SMOOTH);
-		ImageIcon scaledProfileIcon = new ImageIcon(profileImage);
-		lblProfileImage.setIcon(scaledProfileIcon);
+		try {
+			ImageIcon profileIcon = new ImageIcon(Perfil.class.getResource("/img/ic_profile.png"));
+			Image profileImage = profileIcon.getImage().getScaledInstance(160, 160, Image.SCALE_SMOOTH);
+			ImageIcon scaledProfileIcon = new ImageIcon(profileImage);
+			lblProfileImage.setIcon(scaledProfileIcon);
+		} catch (Exception e) {
+			System.err.println("No se pudo cargar la imagen de perfil");
+		}
 
 		JButton btnChangePhoto = new JButton("Cambiar Foto");
 		btnChangePhoto.setFont(new Font("Tahoma", Font.PLAIN, 11));
@@ -101,143 +117,152 @@ public class Perfil extends JFrame {
 		personalInfoPanel.setBackground(Color.WHITE);
 		personalInfoPanel.setBorder(new TitledBorder(new LineBorder(new Color(51, 102, 153), 2), "Información Personal",
 				TitledBorder.LEADING, TitledBorder.TOP, new Font("Tahoma", Font.BOLD, 14), new Color(51, 102, 153)));
-		personalInfoPanel.setBounds(270, 80, 520, 200);
+		personalInfoPanel.setBounds(270, 80, 580, 240);
 		contentPane.add(personalInfoPanel);
 		personalInfoPanel.setLayout(null);
+
+		// Username field
+		JLabel lblUsername = new JLabel("Usuario:");
+		lblUsername.setFont(new Font("Tahoma", Font.BOLD, 12));
+		lblUsername.setBounds(20, 30, 100, 25);
+		personalInfoPanel.add(lblUsername);
+
+		textUsername = new JTextField();
+		textUsername.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		textUsername.setEditable(false);
+		textUsername.setBackground(new Color(245, 245, 245));
+		textUsername.setBounds(130, 30, 180, 25);
+		personalInfoPanel.add(textUsername);
+
+		// DNI field
+		JLabel lblDNI = new JLabel("DNI:");
+		lblDNI.setFont(new Font("Tahoma", Font.BOLD, 12));
+		lblDNI.setBounds(330, 30, 60, 25);
+		personalInfoPanel.add(lblDNI);
+
+		textDNI = new JTextField();
+		textDNI.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		textDNI.setBounds(400, 30, 150, 25);
+		personalInfoPanel.add(textDNI);
 
 		// Name field
 		JLabel lblNombre = new JLabel("Nombre:");
 		lblNombre.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblNombre.setBounds(20, 30, 80, 25);
+		lblNombre.setBounds(20, 70, 100, 25);
 		personalInfoPanel.add(lblNombre);
 
 		textNombre = new JTextField();
 		textNombre.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		textNombre.setBounds(110, 30, 180, 25);
+		textNombre.setBounds(130, 70, 180, 25);
 		personalInfoPanel.add(textNombre);
-		textNombre.setColumns(10);
 
 		// Surname field
 		JLabel lblApellidos = new JLabel("Apellidos:");
 		lblApellidos.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblApellidos.setBounds(310, 30, 80, 25);
+		lblApellidos.setBounds(330, 70, 80, 25);
 		personalInfoPanel.add(lblApellidos);
 
 		textApellidos = new JTextField();
 		textApellidos.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		textApellidos.setBounds(390, 30, 110, 25);
+		textApellidos.setBounds(400, 70, 150, 25);
 		personalInfoPanel.add(textApellidos);
-		textApellidos.setColumns(10);
 
 		// Email field
 		JLabel lblEmail = new JLabel("Email:");
 		lblEmail.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblEmail.setBounds(20, 70, 80, 25);
+		lblEmail.setBounds(20, 110, 100, 25);
 		personalInfoPanel.add(lblEmail);
 
 		textEmail = new JTextField();
 		textEmail.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		textEmail.setBounds(110, 70, 270, 25);
+		textEmail.setEditable(false);
+		textEmail.setBackground(new Color(245, 245, 245));
+		textEmail.setBounds(130, 110, 420, 25);
 		personalInfoPanel.add(textEmail);
-		textEmail.setColumns(10);
 
-		// Phone field
-		JLabel lblTelefono = new JLabel("Teléfono:");
-		lblTelefono.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblTelefono.setBounds(390, 70, 80, 25);
-		personalInfoPanel.add(lblTelefono);
+		// Phone 1 field
+		JLabel lblTelefono1 = new JLabel("Teléfono 1:");
+		lblTelefono1.setFont(new Font("Tahoma", Font.BOLD, 12));
+		lblTelefono1.setBounds(20, 150, 100, 25);
+		personalInfoPanel.add(lblTelefono1);
 
-		textTelefono = new JTextField();
-		textTelefono.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		textTelefono.setBounds(390, 95, 110, 25);
-		personalInfoPanel.add(textTelefono);
-		textTelefono.setColumns(10);
+		textTelefono1 = new JTextField();
+		textTelefono1.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		textTelefono1.setBounds(130, 150, 180, 25);
+		personalInfoPanel.add(textTelefono1);
+
+		// Phone 2 field
+		JLabel lblTelefono2 = new JLabel("Teléfono 2:");
+		lblTelefono2.setFont(new Font("Tahoma", Font.BOLD, 12));
+		lblTelefono2.setBounds(330, 150, 80, 25);
+		personalInfoPanel.add(lblTelefono2);
+
+		textTelefono2 = new JTextField();
+		textTelefono2.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		textTelefono2.setBounds(400, 150, 150, 25);
+		personalInfoPanel.add(textTelefono2);
 
 		// Address field
 		JLabel lblDireccion = new JLabel("Dirección:");
 		lblDireccion.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblDireccion.setBounds(20, 110, 80, 25);
+		lblDireccion.setBounds(20, 190, 100, 25);
 		personalInfoPanel.add(lblDireccion);
 
 		textDireccion = new JTextField();
 		textDireccion.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		textDireccion.setBounds(110, 110, 270, 25);
+		textDireccion.setBounds(130, 190, 420, 25);
 		personalInfoPanel.add(textDireccion);
-		textDireccion.setColumns(10);
 
 		// Professional Information Panel
 		JPanel professionalInfoPanel = new JPanel();
 		professionalInfoPanel.setBackground(Color.WHITE);
 		professionalInfoPanel.setBorder(new TitledBorder(new LineBorder(new Color(51, 102, 153), 2),
-				"Información Profesional", TitledBorder.LEADING, TitledBorder.TOP, new Font("Tahoma", Font.BOLD, 14),
+				"Información del Sistema", TitledBorder.LEADING, TitledBorder.TOP, new Font("Tahoma", Font.BOLD, 14),
 				new Color(51, 102, 153)));
-		professionalInfoPanel.setBounds(50, 300, 740, 120);
+		professionalInfoPanel.setBounds(50, 340, 800, 100);
 		contentPane.add(professionalInfoPanel);
 		professionalInfoPanel.setLayout(null);
 
-		// Position field
-		JLabel lblCargo = new JLabel("Cargo:");
-		lblCargo.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblCargo.setBounds(20, 30, 80, 25);
-		professionalInfoPanel.add(lblCargo);
+		// User Type field
+		JLabel lblTipo = new JLabel("Tipo de Usuario:");
+		lblTipo.setFont(new Font("Tahoma", Font.BOLD, 12));
+		lblTipo.setBounds(20, 30, 120, 25);
+		professionalInfoPanel.add(lblTipo);
 
-		textCargo = new JTextField();
-		textCargo.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		textCargo.setBounds(110, 30, 200, 25);
-		professionalInfoPanel.add(textCargo);
-		textCargo.setColumns(10);
+		textTipoUsuario = new JTextField();
+		textTipoUsuario.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		textTipoUsuario.setEditable(false);
+		textTipoUsuario.setBackground(new Color(245, 245, 245));
+		textTipoUsuario.setBounds(150, 30, 200, 25);
+		professionalInfoPanel.add(textTipoUsuario);
 
-		// Department field
-		JLabel lblDepartamento = new JLabel("Departamento:");
-		lblDepartamento.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblDepartamento.setBounds(350, 30, 100, 25);
-		professionalInfoPanel.add(lblDepartamento);
-
-		textDepartamento = new JTextField();
-		textDepartamento.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		textDepartamento.setBounds(460, 30, 200, 25);
-		professionalInfoPanel.add(textDepartamento);
-		textDepartamento.setColumns(10);
-
-		// User ID and creation date (read-only info)
-		JLabel lblUsuarioId = new JLabel("ID Usuario: USR001");
-		lblUsuarioId.setFont(new Font("Tahoma", Font.ITALIC, 11));
-		lblUsuarioId.setForeground(Color.GRAY);
-		lblUsuarioId.setBounds(20, 70, 150, 20);
+		// User ID (read-only info)
+		lblUsuarioId = new JLabel("ID Usuario: ---");
+		lblUsuarioId.setFont(new Font("Tahoma", Font.BOLD, 12));
+		lblUsuarioId.setForeground(new Color(70, 130, 180));
+		lblUsuarioId.setBounds(20, 65, 200, 20);
 		professionalInfoPanel.add(lblUsuarioId);
 
-		JLabel lblFechaCreacion = new JLabel("Fecha de registro: 15/01/2024");
-		lblFechaCreacion.setFont(new Font("Tahoma", Font.ITALIC, 11));
-		lblFechaCreacion.setForeground(Color.GRAY);
-		lblFechaCreacion.setBounds(200, 70, 200, 20);
-		professionalInfoPanel.add(lblFechaCreacion);
-
-		JLabel lblUltimoAcceso = new JLabel("Último acceso: 16/01/2026 09:30");
-		lblUltimoAcceso.setFont(new Font("Tahoma", Font.ITALIC, 11));
-		lblUltimoAcceso.setForeground(Color.GRAY);
-		lblUltimoAcceso.setBounds(420, 70, 200, 20);
-		professionalInfoPanel.add(lblUltimoAcceso);
-
 		// Action buttons
-		JButton btnGuardar = new JButton("Guardar Cambios");
-		btnGuardar.setFont(new Font("Tahoma", Font.BOLD, 14));
+		JButton btnRefrescar = new JButton("🔄 Recargar Datos");
+		btnRefrescar.setFont(new Font("Tahoma", Font.BOLD, 13));
+		btnRefrescar.setBackground(new Color(70, 130, 180));
+		btnRefrescar.setForeground(Color.WHITE);
+		btnRefrescar.setBounds(150, 470, 160, 40);
+		contentPane.add(btnRefrescar);
+
+		JButton btnGuardar = new JButton("💾 Guardar Cambios");
+		btnGuardar.setFont(new Font("Tahoma", Font.BOLD, 13));
 		btnGuardar.setBackground(new Color(34, 139, 34));
 		btnGuardar.setForeground(Color.WHITE);
-		btnGuardar.setBounds(200, 450, 150, 40);
+		btnGuardar.setBounds(330, 470, 180, 40);
 		contentPane.add(btnGuardar);
 
-		JButton btnCancelar = new JButton("Cancelar");
-		btnCancelar.setFont(new Font("Tahoma", Font.BOLD, 14));
-		btnCancelar.setBackground(new Color(108, 117, 125));
-		btnCancelar.setForeground(Color.WHITE);
-		btnCancelar.setBounds(370, 450, 120, 40);
-		contentPane.add(btnCancelar);
-
-		JButton btnCambiarPassword = new JButton("Cambiar Contraseña");
-		btnCambiarPassword.setFont(new Font("Tahoma", Font.BOLD, 14));
+		JButton btnCambiarPassword = new JButton("🔒 Cambiar Contraseña");
+		btnCambiarPassword.setFont(new Font("Tahoma", Font.BOLD, 13));
 		btnCambiarPassword.setBackground(new Color(255, 193, 7));
 		btnCambiarPassword.setForeground(Color.BLACK);
-		btnCambiarPassword.setBounds(510, 450, 180, 40);
+		btnCambiarPassword.setBounds(530, 470, 200, 40);
 		contentPane.add(btnCambiarPassword);
 
 		// Back button
@@ -245,18 +270,15 @@ public class Perfil extends JFrame {
 		btnVolver.setFont(new Font("Tahoma", Font.BOLD, 12));
 		btnVolver.setBackground(new Color(70, 130, 180));
 		btnVolver.setForeground(Color.WHITE);
-		btnVolver.setBounds(50, 520, 140, 35);
+		btnVolver.setBounds(50, 550, 150, 35);
 		contentPane.add(btnVolver);
 
 		// Status label
-		JLabel lblStatus = new JLabel("Estado: Activo");
+		lblStatus = new JLabel("Cargando datos...");
 		lblStatus.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblStatus.setForeground(new Color(34, 139, 34));
-		lblStatus.setBounds(650, 525, 100, 25);
+		lblStatus.setForeground(Color.BLUE);
+		lblStatus.setBounds(250, 555, 400, 25);
 		contentPane.add(lblStatus);
-
-		// Initialize with sample data
-		loadUserData();
 
 		// Button Listeners
 		btnVolver.addActionListener(new ActionListener() {
@@ -267,52 +289,153 @@ public class Perfil extends JFrame {
 			}
 		});
 
-		btnGuardar.addActionListener(new ActionListener() {
+		btnRefrescar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// TODO: Implement save functionality
-				javax.swing.JOptionPane.showMessageDialog(null, "Cambios guardados correctamente", "Éxito",
-						javax.swing.JOptionPane.INFORMATION_MESSAGE);
+				cargarDatosUsuario();
 			}
 		});
 
-		btnCancelar.addActionListener(new ActionListener() {
+		btnGuardar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// Reload original data
-				loadUserData();
-				javax.swing.JOptionPane.showMessageDialog(null, "Cambios cancelados", "Información",
-						javax.swing.JOptionPane.INFORMATION_MESSAGE);
+				// TODO: Implementar guardado en servidor
+				JOptionPane.showMessageDialog(null, 
+					"Funcionalidad de guardado próximamente.\n" +
+					"Actualmente el servidor solo permite lectura de datos.",
+					"Información",
+					JOptionPane.INFORMATION_MESSAGE);
 			}
 		});
 
 		btnCambiarPassword.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// TODO: Open password change dialog
-				javax.swing.JOptionPane.showMessageDialog(null, "Funcionalidad de cambio de contraseña próximamente",
-						"Información", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(null, 
+					"Funcionalidad de cambio de contraseña próximamente",
+					"Información", 
+					JOptionPane.INFORMATION_MESSAGE);
 			}
 		});
 
 		btnChangePhoto.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// TODO: Implement photo change functionality
-				javax.swing.JOptionPane.showMessageDialog(null, "Funcionalidad de cambio de foto próximamente",
-						"Información", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(null, 
+					"Funcionalidad de cambio de foto próximamente",
+					"Información", 
+					JOptionPane.INFORMATION_MESSAGE);
 			}
 		});
+
+		// Cargar datos del usuario al iniciar
+		cargarDatosUsuario();
 	}
 
 	/**
-	 * Load user data into the form fields
+	 * Carga los datos del usuario desde el servidor
 	 */
-	private void loadUserData() {
-		// Sample data - in real application this would come from database
-		textNombre.setText("Juan");
-		textApellidos.setText("Pérez García");
-		textEmail.setText("juan.perez@elorrieta.com");
-		textTelefono.setText("+34 123 456 789");
-		textDireccion.setText("Calle Mayor, 123, 48001 Bilbao");
-		textCargo.setText("Profesor de Informática");
-		textDepartamento.setText("Departamento de Tecnología");
+	private void cargarDatosUsuario() {
+		lblStatus.setText("Cargando datos del perfil...");
+		lblStatus.setForeground(Color.BLUE);
+
+		new Thread(() -> {
+			try {
+				// Obtener ID del usuario actual desde la sesión
+				Long userId = SessionManager.getInstance().getUserId();
+				
+				if (userId == null) {
+					EventQueue.invokeLater(() -> {
+						lblStatus.setText("❌ Error: No hay sesión activa");
+						lblStatus.setForeground(Color.RED);
+						JOptionPane.showMessageDialog(this,
+							"No se pudo obtener la información del usuario.\n" +
+							"Por favor, inicia sesión nuevamente.",
+							"Error de Sesión",
+							JOptionPane.ERROR_MESSAGE);
+						
+						// Cargar datos de ejemplo como fallback
+						loadSampleData();
+					});
+					return;
+				}
+
+				// Obtener datos del perfil
+				perfilActual = profileClient.obtenerPerfilUsuario(userId);
+
+				if (perfilActual != null) {
+					// Obtener nombre del tipo de usuario
+					String tipoNombre = profileClient.obtenerNombreTipo(perfilActual.getTipoId());
+					
+					EventQueue.invokeLater(() -> {
+						actualizarCamposPerfil(perfilActual, tipoNombre);
+						lblStatus.setText("✓ Datos cargados correctamente");
+						lblStatus.setForeground(new Color(0, 128, 0));
+					});
+				} else {
+					EventQueue.invokeLater(() -> {
+						lblStatus.setText("❌ No se encontró el usuario");
+						lblStatus.setForeground(Color.RED);
+						JOptionPane.showMessageDialog(this,
+							"No se encontraron datos para el usuario actual.",
+							"Usuario No Encontrado",
+							JOptionPane.WARNING_MESSAGE);
+						
+						loadSampleData();
+					});
+				}
+
+			} catch (Exception e) {
+				EventQueue.invokeLater(() -> {
+					lblStatus.setText("❌ Error al cargar datos");
+					lblStatus.setForeground(Color.RED);
+					
+					JOptionPane.showMessageDialog(this,
+						"Error al conectar con el servidor:\n" + e.getMessage() +
+						"\n\nVerifica que el servidor esté ejecutándose.",
+						"Error de Conexión",
+						JOptionPane.ERROR_MESSAGE);
+					
+					// Cargar datos de ejemplo como fallback
+					loadSampleData();
+				});
+			}
+		}).start();
 	}
 
+	/**
+	 * Actualiza los campos del formulario con los datos del perfil
+	 */
+	private void actualizarCamposPerfil(Profile.UserProfileData perfil, String tipoNombre) {
+		textUsername.setText(perfil.getUsername());
+		textNombre.setText(perfil.getNombre());
+		textApellidos.setText(perfil.getApellidos());
+		textEmail.setText(perfil.getEmail());
+		textDNI.setText(perfil.getDni());
+		textTelefono1.setText(perfil.getTelefono1());
+		textTelefono2.setText(perfil.getTelefono2());
+		textDireccion.setText(perfil.getDireccion());
+		textTipoUsuario.setText(tipoNombre != null ? tipoNombre : perfil.getTipoNombre());
+		
+		lblUsuarioId.setText("ID Usuario: " + perfil.getId());
+		
+		// TODO: Cargar imagen de perfil si existe argazkiaUrl
+		if (perfil.getArgazkiaUrl() != null && !perfil.getArgazkiaUrl().isEmpty()) {
+			System.out.println("URL de foto de perfil: " + perfil.getArgazkiaUrl());
+		}
+	}
+
+	/**
+	 * Carga datos de ejemplo (fallback)
+	 */
+	private void loadSampleData() {
+		textUsername.setText("usuario.ejemplo");
+		textNombre.setText("Usuario");
+		textApellidos.setText("de Ejemplo");
+		textEmail.setText("usuario@elorrieta.com");
+		textDNI.setText("12345678A");
+		textTelefono1.setText("+34 123 456 789");
+		textTelefono2.setText("");
+		textDireccion.setText("Calle Ejemplo, 123");
+		textTipoUsuario.setText("Usuario");
+		lblUsuarioId.setText("ID Usuario: ---");
+		lblStatus.setText("⚠ Mostrando datos de ejemplo (sin conexión)");
+		lblStatus.setForeground(new Color(255, 140, 0));
+	}
 }
