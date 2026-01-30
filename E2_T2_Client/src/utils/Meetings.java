@@ -15,6 +15,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import connect.Connect;
+
 /**
  * Cliente Socket para operaciones con reuniones
  * 
@@ -23,9 +25,11 @@ import com.google.gson.JsonObject;
  */
 public class Meetings {
 
-	private static final String SERVER_HOST = "localhost";
-	private static final int SERVER_PORT = 6000;
-	private static final int TIMEOUT = 5000;
+	private static Connect connect = new Connect();
+
+	private static final String SERVER_HOST = connect.getServerHost();
+	private static final int SERVER_PORT = connect.getServerPort();
+	private static final int TIMEOUT = connect.getTimeout();
 
 	private Gson gson;
 

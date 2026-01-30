@@ -10,11 +10,15 @@ import java.net.SocketTimeoutException;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-public class CheckLogin {
+import connect.Connect;
 
-	private static final String SERVER_HOST = "localhost";
-	private static final int SERVER_PORT = 6000;
-	private static final int TIMEOUT = 5000; // 5 segundos
+public class CheckLogin {
+	
+	private static Connect connect = new Connect();
+
+	private static final String SERVER_HOST = connect.getServerHost();
+	private static final int SERVER_PORT = connect.getServerPort();
+	private static final int TIMEOUT = connect.getTimeout();
 
 	private Gson gson;
 
