@@ -3,6 +3,8 @@ package com.elorserv.model;
 
 import java.sql.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -25,7 +27,8 @@ public class Matriculaciones implements java.io.Serializable {
 	private Integer id;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
-    @JoinColumn(name = "ciclo_id")
+    @JoinColumn(name = "ciclo_id", insertable = false, updatable = false)
+	@JsonIgnore
 	private Ciclos ciclos;
 	
 	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides

@@ -6,9 +6,13 @@ import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 /**
@@ -26,9 +30,13 @@ public class Ciclos implements java.io.Serializable {
 	private String nombre;
 	
 	/*
-	private Set moduloses = new HashSet(0);
-	private Set matriculacioneses = new HashSet(0);
+	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
+    @JoinColumn(name = "id")
+	private Modulos modulos;
 	*/
+	
+	@OneToMany(mappedBy = "ciclos")
+	private Set<Matriculaciones> matriculaciones;
 
 	public Ciclos() {
 	}
@@ -37,12 +45,11 @@ public class Ciclos implements java.io.Serializable {
 		this.nombre = nombre;
 	}
 
-	public Ciclos(String nombre, Set moduloses, Set matriculacioneses) {
+	public Ciclos(String nombre, Modulos modulos, Set<Matriculaciones> matriculaciones) {
 		this.nombre = nombre;
-		/*
-		this.moduloses = moduloses;
-		this.matriculacioneses = matriculacioneses;
-		*/
+		//this.modulos = modulos;
+		this.matriculaciones = matriculaciones;
+		
 	}
 
 	public Integer getId() {
@@ -62,20 +69,21 @@ public class Ciclos implements java.io.Serializable {
 	}
 
 	/*
-	public Set getModuloses() {
-		return this.moduloses;
+	public Modulos getModuloses() {
+		return this.modulos;
 	}
 
-	public void setModuloses(Set moduloses) {
-		this.moduloses = moduloses;
-	}
-
-	public Set getMatriculacioneses() {
-		return this.matriculacioneses;
-	}
-
-	public void setMatriculacioneses(Set matriculacioneses) {
-		this.matriculacioneses = matriculacioneses;
+	public void setModuloses(Modulos moduloses) {
+		this.modulos = moduloses;
 	}
 	*/
+
+	public Set<Matriculaciones> getMatriculacioneses() {
+		return this.matriculaciones;
+	}
+
+	public void setMatriculacioneses(Set<Matriculaciones> matriculacioneses) {
+		this.matriculaciones = matriculacioneses;
+	}
+	
 }

@@ -54,4 +54,24 @@ public class HorariosController {
 
         throw new Exception("Unable to build JPQL for Horarios by user id. Check Horarios entity mapping.");
     }
+    
+    @GetMapping("/getHorariosIkasle/{id}")
+    public ResponseEntity<?> getHorariosFrom(Integer id) throws Exception{
+    		try {
+    			TypedQuery<Horarios> query = entityManager.createQuery("SELECT h FROM Horarios h "
+    					+ "WHERE h.modulos.ciclos.id IN (SELECT m.ciclos.id FROM Matriculaciones m WHERE m.users.id = :param )", Horarios.class);
+    			query.setParameter("param", id);
+    			
+    			List<Horarios> horarios = query.getResultList();
+    			
+    			for(Horarios h : horarios) {
+    				System.out.println(h.getId());
+    			}
+    			
+    			return ResponseEntity.ok(horarios);
+    		} catch (IllegalArgumentException ex) {
+    			
+    		}
+    	throw new Exception("Unable to build JPQL for Horarios by student id. Check Horarios entity mapping");
+    }
 }
