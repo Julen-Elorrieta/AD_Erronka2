@@ -34,22 +34,12 @@ public class HorariosController {
 
 
     private List<Horarios> findByUserId(Integer id) throws Exception {
-        String[] candidates = {
-            "SELECT h FROM Horarios h WHERE h.user.id = :id",
-            "SELECT h FROM Horarios h WHERE h.usuario.id = :id",
-            "SELECT h FROM Horarios h WHERE h.users.id = :id",
-            "SELECT h FROM Horarios h WHERE h.userId = :id",
-            "SELECT h FROM Horarios h WHERE h.usuarioId = :id"
-        };
-
-        for (String jpql : candidates) {
-            try {
-                TypedQuery<Horarios> q = entityManager.createQuery(jpql, Horarios.class);
-                q.setParameter("id", id);
-                return q.getResultList(); // return even if empty
-            } catch (IllegalArgumentException ex) {
-                // invalid JPQL for this mapping, try next candidate
-            }
+        try {
+            TypedQuery<Horarios> q = entityManager.createQuery("SELECT h FROM Horarios h WHERE h.users.id = :id", Horarios.class);
+            q.setParameter("id", id);
+            return q.getResultList(); // return even if empty
+        } catch (IllegalArgumentException ex) {
+            // invalid JPQL for this mapping, try next candidate
         }
 
         throw new Exception("Unable to build JPQL for Horarios by user id. Check Horarios entity mapping.");
@@ -58,14 +48,28 @@ public class HorariosController {
     @GetMapping("/getHorariosIkasle/{id}")
     public ResponseEntity<?> getHorariosFrom(Integer id) throws Exception{
     		try {
-    			TypedQuery<Horarios> query = entityManager.createQuery("SELECT h FROM Horarios h "
-    					+ "WHERE h.modulos.ciclos.id IN (SELECT m.ciclos.id FROM Matriculaciones m WHERE m.users.id = :param )", Horarios.class);
+    			TypedQuery<Horarios> query = entityManager.createQuery(
+    					"SELECT h FROM Horarios h " +
+    					"JOIN h.modulos mo " +
+    					"JOIN mo.ciclos c " +
+    					"WHERE c.id IN (" +
+    					"  SELECT ma.ciclos.id " +
+    					"  FROM Matriculaciones ma " +
+    					"  WHERE ma.users.id = :param)", Horarios.class);
     			query.setParameter("param", id);
     			
     			List<Horarios> horarios = query.getResultList();
     			
-    			for(Horarios h : horarios) {
-    				System.out.println(h.getId());
+    			if (!horarios.isEmpty()) {
+    				for(Horarios h : horarios) {
+    					if(h != null) {
+    						System.out.println(h.getId());
+    					} else {
+    						System.out.println("000000");
+    					}
+    				}
+    			} else {
+    				System.out.println("vacío");
     			}
     			
     			return ResponseEntity.ok(horarios);

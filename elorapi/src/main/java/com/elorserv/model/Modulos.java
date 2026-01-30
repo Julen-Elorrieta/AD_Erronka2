@@ -4,6 +4,8 @@ package com.elorserv.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,6 +14,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 /**
@@ -21,26 +24,23 @@ import jakarta.persistence.Table;
 @Table(name = "modulos")
 public class Modulos implements java.io.Serializable {
 
-	@Id
+	@Id 
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
-	
-	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ciclo_id")
-	private Ciclos ciclos;
-	
-	@Column
-	private String nombre;
-	
-	@Column
-	private String nombreEus;
-	
-	@Column
-	private int horas;
-	
-	@Column
-	private byte curso;
-	//private Set horarioses = new HashSet(0);
+    private Ciclos ciclos;
+
+    private String nombre;
+    @Column(name = "nombre_eus")
+    private String nombreEus;
+    private int horas;
+    private byte curso;
+
+    @JsonIgnore 
+    @OneToMany(mappedBy = "modulos")
+    private Set<Horarios> horarios = new HashSet<>(0);
 
 	public Modulos() {
 	}
@@ -52,13 +52,13 @@ public class Modulos implements java.io.Serializable {
 		this.curso = curso;
 	}
 
-	public Modulos(Ciclos ciclos, String nombre, String nombreEus, int horas, byte curso, Set horarioses) {
+	public Modulos(Ciclos ciclos, String nombre, String nombreEus, int horas, byte curso, Set<Horarios> horarios) {
 		this.ciclos = ciclos;
 		this.nombre = nombre;
 		this.nombreEus = nombreEus;
 		this.horas = horas;
 		this.curso = curso;
-		//this.horarioses = horarioses;
+		this.horarios = horarios;
 	}
 
 	public Integer getId() {
@@ -109,13 +109,12 @@ public class Modulos implements java.io.Serializable {
 		this.curso = curso;
 	}
 
-	/*
-	public Set getHorarioses() {
-		return this.horarioses;
+	@JsonIgnore
+	public Set<Horarios> getHorarioses() {
+		return this.horarios;
 	}
 
-	public void setHorarioses(Set horarioses) {
-		this.horarioses = horarioses;
+	public void setHorarioses(Set<Horarios> horarioses) {
+		this.horarios = horarioses;
 	}
-	*/
 }

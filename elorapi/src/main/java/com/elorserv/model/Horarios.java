@@ -3,6 +3,8 @@ package com.elorserv.model;
 
 import java.sql.Timestamp;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,35 +22,26 @@ import jakarta.persistence.Table;
 @Table(name = "horarios")
 public class Horarios implements java.io.Serializable {
 	
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
-	
-	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
+	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "modulo_id")
-	private Modulos modulos;
-	
-	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
+    private Modulos modulos;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profe_id")
-	private Users users;
-	
-	@Column
-	private String dia;
-	
-	@Column
-	private byte hora;
-	
-	@Column
-	private String aula;
-	
-	@Column
-	private String observaciones;
-	
-	@Column
-	private Timestamp createdAt;
-	
-	@Column
-	private Timestamp updatedAt;
+    @JsonBackReference(value = "users-horarios")
+    private Users users;
+
+    private String dia;
+    private byte hora;
+    private String aula;
+    private String observaciones;
+    @Column(name = "created_at")
+    private Timestamp createdAt;
+    @Column(name = "updated_at")
+    private Timestamp updatedAt;
 
 	public Horarios() {
 	}

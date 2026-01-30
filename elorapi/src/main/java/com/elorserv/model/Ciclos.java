@@ -4,6 +4,8 @@ package com.elorserv.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,21 +24,18 @@ import jakarta.persistence.Table;
 @Table(name = "ciclos")
 public class Ciclos implements java.io.Serializable {
 
-	@Id
+	@Id 
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
-	
-	@Column
-	private String nombre;
-	
-	/*
-	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
-    @JoinColumn(name = "id")
-	private Modulos modulos;
-	*/
-	
-	@OneToMany(mappedBy = "ciclos")
-	private Set<Matriculaciones> matriculaciones;
+    private Integer id;
+    private String nombre;
+
+    @JsonIgnore 
+    @OneToMany(mappedBy = "ciclos")
+    private Set<Modulos> modulos = new HashSet<>(0);
+
+    @JsonIgnore 
+    @OneToMany(mappedBy = "ciclos")
+    private Set<Matriculaciones> matriculaciones = new HashSet<>(0);
 
 	public Ciclos() {
 	}
@@ -45,9 +44,9 @@ public class Ciclos implements java.io.Serializable {
 		this.nombre = nombre;
 	}
 
-	public Ciclos(String nombre, Modulos modulos, Set<Matriculaciones> matriculaciones) {
+	public Ciclos(String nombre, Set<Modulos> modulos, Set<Matriculaciones> matriculaciones) {
 		this.nombre = nombre;
-		//this.modulos = modulos;
+		this.modulos = modulos;
 		this.matriculaciones = matriculaciones;
 		
 	}
@@ -68,16 +67,16 @@ public class Ciclos implements java.io.Serializable {
 		this.nombre = nombre;
 	}
 
-	/*
-	public Modulos getModuloses() {
+	@JsonIgnore
+	public Set<Modulos> getModuloses() {
 		return this.modulos;
 	}
 
-	public void setModuloses(Modulos moduloses) {
+	public void setModuloses(Set<Modulos> moduloses) {
 		this.modulos = moduloses;
 	}
-	*/
-
+	
+	@JsonIgnore
 	public Set<Matriculaciones> getMatriculacioneses() {
 		return this.matriculaciones;
 	}

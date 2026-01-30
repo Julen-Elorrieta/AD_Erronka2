@@ -4,6 +4,8 @@ package com.elorserv.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 
 /**
@@ -13,17 +15,17 @@ import jakarta.persistence.*;
 @Table(name = "tipos")
 public class Tipos implements java.io.Serializable {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
-	
-	@Column
-	private String name;
-	
-	@Column
-	private String nameEu;
-	
-	//private Set userses = new HashSet(0);
+	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    
+    private String name;
+    
+    @Column(name = "name_eu")
+    private String nameEu;
+
+    @JsonIgnore 
+    @OneToMany(mappedBy = "tipos") 
+    private Set<Users> users = new HashSet<>(0);
 
 	public Tipos() {
 	}

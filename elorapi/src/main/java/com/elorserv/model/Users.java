@@ -5,6 +5,9 @@ import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
 
 /**
@@ -14,56 +17,43 @@ import jakarta.persistence.*;
 @Table(name = "users")
 public class Users implements java.io.Serializable {
 	
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
-	
-	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
+	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tipo_id")
-	private Tipos tipos;
+    private Tipos tipos;
+
+    private String email;
+    private String username;
+    private String password;
+    private String nombre;
+    private String apellidos;
+    private String dni;
+    private String direccion;
+    private String telefono1;
+    private String telefono2;
+    @Column(name = "argazkia_url")
+    private String argazkiaUrl;
+    @Column(name = "created_at")
+    private Timestamp createdAt;
+    @Column(name = "updated_at")
+    private Timestamp updatedAt;
+
+    // IMPORTANT: @JsonIgnore para evitar que el JSON del Login sea infinito
+    @JsonIgnore @OneToMany(mappedBy = "users")
+    private Set<Matriculaciones> matriculaciones = new HashSet<>(0);
+
+    @JsonIgnore @OneToMany(mappedBy = "usersByAlumnoId")
+    private Set<Reuniones> reunionesesForAlumnoId = new HashSet<>(0);
+
+    @OneToMany(mappedBy = "users")
+    @JsonManagedReference(value = "users-horarios")
+    private Set<Horarios> horarios = new HashSet<>(0);
+
+    @JsonIgnore @OneToMany(mappedBy = "usersByProfesorId")
+    private Set<Reuniones> reunionesesForProfesorId = new HashSet<>(0);
 	
-	@Column(nullable = false, unique = true)
-	private String email;
-	
-	@Column
-	private String username;
-	
-	@Column
-	private String password;
-	
-	@Column
-	private String nombre;
-	
-	@Column
-	private String apellidos;
-	
-	@Column
-	private String dni;
-	
-	@Column
-	private String direccion;
-	
-	@Column
-	private String telefono1;
-	
-	@Column
-	private String telefono2;
-	
-	@Column
-	private String argazkiaUrl;
-	
-	@Column
-	private Timestamp createdAt;
-	
-	@Column
-	private Timestamp updatedAt;
-	
-	/*
-	private Set matriculacioneses = new HashSet(0);
-	private Set reunionesesForAlumnoId = new HashSet(0);
-	private Set horarioses = new HashSet(0);
-	private Set reunionesesForProfesorId = new HashSet(0);
-	*/
 	public Users() {
 	}
 
@@ -76,8 +66,8 @@ public class Users implements java.io.Serializable {
 
 	public Users(Tipos tipos, String email, String username, String password, String nombre, String apellidos,
 			String dni, String direccion, String telefono1, String telefono2, String argazkiaUrl, Timestamp createdAt,
-			Timestamp updatedAt, Set matriculacioneses, Set reunionesesForAlumnoId, Set horarioses,
-			Set reunionesesForProfesorId) {
+			Timestamp updatedAt, Set<Matriculaciones> matriculaciones, Set<Reuniones> reunionesForAlumnoId, Set<Horarios> horarios,
+			Set<Reuniones> reunionesForProfesorId) {
 		this.tipos = tipos;
 		this.email = email;
 		this.username = username;
@@ -91,12 +81,10 @@ public class Users implements java.io.Serializable {
 		this.argazkiaUrl = argazkiaUrl;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
-		/*
-		this.matriculacioneses = matriculacioneses;
-		this.reunionesesForAlumnoId = reunionesesForAlumnoId;
-		this.horarioses = horarioses;
-		this.reunionesesForProfesorId = reunionesesForProfesorId;
-		*/
+		this.matriculaciones = matriculaciones;
+		this.reunionesesForAlumnoId = reunionesForAlumnoId;
+		this.horarios = horarios;
+		this.reunionesesForProfesorId = reunionesForProfesorId;
 	}
 
 	public Integer getId() {
@@ -211,37 +199,35 @@ public class Users implements java.io.Serializable {
 		this.updatedAt = updatedAt;
 	}
 	
-	/*
-	public Set getMatriculacioneses() {
-		return this.matriculacioneses;
+	public Set<Matriculaciones> getMatriculacioneses() {
+		return this.matriculaciones;
 	}
 
-	public void setMatriculacioneses(Set matriculacioneses) {
-		this.matriculacioneses = matriculacioneses;
+	public void setMatriculacioneses(Set<Matriculaciones> matriculacioneses) {
+		this.matriculaciones = matriculacioneses;
 	}
 
-	public Set getReunionesesForAlumnoId() {
+	public Set<Reuniones> getReunionesesForAlumnoId() {
 		return this.reunionesesForAlumnoId;
 	}
 
-	public void setReunionesesForAlumnoId(Set reunionesesForAlumnoId) {
+	public void setReunionesesForAlumnoId(Set<Reuniones> reunionesesForAlumnoId) {
 		this.reunionesesForAlumnoId = reunionesesForAlumnoId;
 	}
 
-	public Set getHorarioses() {
-		return this.horarioses;
+	public Set<Horarios> getHorarioses() {
+		return this.horarios;
 	}
 
-	public void setHorarioses(Set horarioses) {
-		this.horarioses = horarioses;
+	public void setHorarioses(Set<Horarios> horarioses) {
+		this.horarios = horarioses;
 	}
 
-	public Set getReunionesesForProfesorId() {
+	public Set<Reuniones> getReunionesesForProfesorId() {
 		return this.reunionesesForProfesorId;
 	}
 
-	public void setReunionesesForProfesorId(Set reunionesesForProfesorId) {
+	public void setReunionesesForProfesorId(Set<Reuniones> reunionesesForProfesorId) {
 		this.reunionesesForProfesorId = reunionesesForProfesorId;
 	}
-	*/
 }

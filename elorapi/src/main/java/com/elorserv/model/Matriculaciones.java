@@ -22,24 +22,19 @@ import jakarta.persistence.Table;
 @Table(name = "matriculaciones")
 public class Matriculaciones implements java.io.Serializable {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
-	
-	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
-    @JoinColumn(name = "ciclo_id", insertable = false, updatable = false)
-	@JsonIgnore
-	private Ciclos ciclos;
-	
-	@ManyToOne(fetch = FetchType.LAZY) // Lazy para que no cargue el tipo si no lo pides
-    @JoinColumn(name = "alum_id")
-	private Users users;
-	
-	@Column
-	private byte curso;
-	
-	@Column
-	private Date fecha;
+	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ciclo_id")
+    private Ciclos ciclos;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alum_id") // Enlace con el alumno
+    private Users users;
+
+    private byte curso;
+    private Date fecha;
 
 	public Matriculaciones() {
 	}
