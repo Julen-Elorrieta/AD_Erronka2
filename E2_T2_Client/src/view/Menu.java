@@ -1,7 +1,6 @@
 package view;
 
 import java.awt.Color;
-import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -19,22 +18,6 @@ public class Menu extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
-
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					Menu frame = new Menu("Profe");
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	/**
 	 * Create the frame.
@@ -139,7 +122,7 @@ public class Menu extends JFrame {
 		btnReuniones.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dispose();
-				Reuniones reuniones = new Reuniones();
+				Reuniones reuniones = new Reuniones(user);
 				reuniones.setVisible(true);
 			}
 		});
@@ -163,7 +146,7 @@ public class Menu extends JFrame {
 		btnAlumnos.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dispose();
-				Alumnos alumnos = new Alumnos();
+				Alumnos alumnos = new Alumnos(user);
 				alumnos.setVisible(true);
 			}
 		});

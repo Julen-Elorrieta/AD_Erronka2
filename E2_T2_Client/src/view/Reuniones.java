@@ -42,31 +42,19 @@ public class Reuniones extends JFrame {
 	private JLabel lblTotal;
 	private JComboBox<String> comboFiltroEstado;
 	private JTextField txtBuscar;
-	private String currentUser;
 	private Meetings meetingClient;
+	private String user;
 	private List<Meetings.MeetingData> reunionesActuales;
 
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					Reuniones frame = new Reuniones();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	/**
 	 * Create the frame.
+	 * @param user 
 	 */
-	public Reuniones() {
+	public Reuniones(String user) {
 		meetingClient = new Meetings();
+		
+		this.user = user;
 
 		setTitle("Gestión de Reuniones - Elorrieta");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -149,7 +137,7 @@ public class Reuniones extends JFrame {
 		btnVolver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dispose();
-				Menu menu = new Menu(currentUser);
+				Menu menu = new Menu(user);
 				menu.setVisible(true);
 			}
 		});

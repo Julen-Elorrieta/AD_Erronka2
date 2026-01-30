@@ -2,7 +2,6 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -21,29 +20,11 @@ public class Consultas extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private WeekScheduleTable scheduleTable;
-	private String currentUser;
-
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					Consultas frame = new Consultas("TestUser");
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	/**
 	 * Create the frame.
 	 */
 	public Consultas(String user) {
-		this.currentUser = user;
 
 		setIconImage(Toolkit.getDefaultToolkit().getImage(Consultas.class.getResource("/img/elorrieta.png")));
 		setTitle("Consultas - EE Software");
@@ -88,7 +69,7 @@ public class Consultas extends JFrame {
 		btnVolver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dispose();
-				Menu menu = new Menu(currentUser);
+				Menu menu = new Menu(user);
 				menu.setVisible(true);
 			}
 		});

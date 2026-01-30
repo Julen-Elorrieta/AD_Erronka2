@@ -214,6 +214,11 @@ public class WeekScheduleTable extends JPanel {
 
 	// Renderer personalizado para aplicar colores a las celdas
 	private class CustomCellRenderer extends DefaultTableCellRenderer {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 				int row, int column) {

@@ -30,28 +30,14 @@ public class Alumnos extends JFrame {
 	private JLabel selectedUserLabel;
 	private JLabel statusLabel;
 	private JButton btnVolver;
-	private String currentUser;
-
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					Alumnos frame = new Alumnos();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	/**
 	 * Create the frame.
+	 * 
+	 * @param user
 	 */
-	public Alumnos() {
+	public Alumnos(String user) {
+
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 900, 600);
 		setTitle("Gestión de Alumnos - Elorrieta");
@@ -74,29 +60,29 @@ public class Alumnos extends JFrame {
 				userTable.filterUsers(searchField.getText());
 			}
 		});
-		
+
 		refreshButton = new JButton("🔄 Actualizar");
 		refreshButton.addActionListener(e -> cargarAlumnosDesdeServidor());
-		
+
 		statusLabel = new JLabel("Listo");
-		
+
 		topPanel.add(searchLabel);
 		topPanel.add(searchField);
 		topPanel.add(refreshButton);
 		topPanel.add(statusLabel);
 		contentPane.add(topPanel, BorderLayout.NORTH);
-		
+
 		btnVolver = new JButton("Volver");
 		btnVolver.setForeground(Color.WHITE);
 		btnVolver.setFont(new Font("Tahoma", Font.BOLD, 14));
 		btnVolver.setBackground(new Color(108, 117, 125));
 		topPanel.add(btnVolver);
-		
+
 		// Button listener
 		btnVolver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dispose();
-				Menu menu = new Menu(currentUser);
+				Menu menu = new Menu(user);
 				menu.setVisible(true);
 			}
 		});
@@ -138,60 +124,49 @@ public class Alumnos extends JFrame {
 		// Deshabilitar botón mientras carga
 		refreshButton.setEnabled(false);
 		statusLabel.setText("Cargando alumnos...");
-		
+
 		// Ejecutar en hilo separado para no bloquear la UI
 		new Thread(() -> {
 			try {
 				GetAllUsers client = new GetAllUsers();
-				
+
 				// Obtener solo alumnos (tipoId = 4)
 				List<GetAllUsers.UserData> alumnos = client.obtenerUsuariosPorTipo(4);
-				
+
 				// Actualizar UI en el hilo de eventos
 				EventQueue.invokeLater(() -> {
 					// Limpiar tabla
 					userTable.clearUsers();
-					
+
 					// Agregar alumnos a la tabla
 					for (GetAllUsers.UserData alumno : alumnos) {
-						userTable.addUser(
-							alumno.getId().intValue(),
-							alumno.getNombre(),
-							alumno.getApellidos(),
-							alumno.getEmail(),
-							alumno.getTipoNombre()
-						);
+						userTable.addUser(alumno.getId().intValue(), alumno.getNombre(), alumno.getApellidos(),
+								alumno.getEmail(), alumno.getTipoNombre());
 					}
-					
+
 					// Actualizar estado
 					statusLabel.setText("✓ " + alumnos.size() + " alumnos cargados");
 					refreshButton.setEnabled(true);
-					
+
 					if (alumnos.isEmpty()) {
-						javax.swing.JOptionPane.showMessageDialog(
-							this,
-							"No se encontraron alumnos en el sistema.\n" +
-							"Verifica que el servidor esté ejecutándose.",
-							"Sin datos",
-							javax.swing.JOptionPane.WARNING_MESSAGE
-						);
+						javax.swing.JOptionPane.showMessageDialog(this,
+								"No se encontraron alumnos en el sistema.\n"
+										+ "Verifica que el servidor esté ejecutándose.",
+								"Sin datos", javax.swing.JOptionPane.WARNING_MESSAGE);
 					}
 				});
-				
+
 			} catch (Exception e) {
 				// Manejar error en el hilo de eventos
 				EventQueue.invokeLater(() -> {
 					statusLabel.setText("❌ Error al cargar");
 					refreshButton.setEnabled(true);
-					
-					javax.swing.JOptionPane.showMessageDialog(
-						this,
-						"Error al conectar con el servidor:\n" + e.getMessage() +
-						"\n\nVerifica que el servidor esté ejecutándose en el puerto 6000.",
-						"Error de Conexión",
-						javax.swing.JOptionPane.ERROR_MESSAGE
-					);
-					
+
+					javax.swing.JOptionPane.showMessageDialog(this,
+							"Error al conectar con el servidor:\n" + e.getMessage()
+									+ "\n\nVerifica que el servidor esté ejecutándose en el puerto 6000.",
+							"Error de Conexión", javax.swing.JOptionPane.ERROR_MESSAGE);
+
 					// Cargar datos de ejemplo como fallback
 					loadSampleData();
 				});

@@ -43,21 +43,6 @@ public class Perfil extends JFrame {
 	private Profile profileClient;
 	private Profile.UserProfileData perfilActual;
 
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					Perfil frame = new Perfil("Juan Pérez");
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	/**
 	 * Create the frame.
