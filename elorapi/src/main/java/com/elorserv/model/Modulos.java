@@ -110,11 +110,11 @@ public class Modulos implements java.io.Serializable {
 	}
 
 	@JsonIgnore
-	public Set<Horarios> getHorarioses() {
+	public Set<Horarios> getHorarios() {
 		return this.horarios;
 	}
 
-	public void setHorarioses(Set<Horarios> horarioses) {
+	public void setHorarios(Set<Horarios> horarioses) {
 		this.horarios = horarioses;
 	}
 }

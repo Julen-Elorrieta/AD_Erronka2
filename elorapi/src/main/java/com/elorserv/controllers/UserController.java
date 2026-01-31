@@ -62,35 +62,42 @@ public class UserController {
 			return ResponseEntity.status(500).body("Server error: " + e.getMessage());
 		}
 	}
-
-	@GetMapping("/profesor/{profId}/alumnos")
-	public ResponseEntity<?> getAlumnosFromProfesor(@PathVariable Integer profId) {
+	
+	@GetMapping("/alumno/{id}/profesores")
+	public ResponseEntity<?> getProfesoresFromAlumnos(@PathVariable Integer id) throws Exception {
 		try {
-			System.out.println("=== ENDPOINT LLAMADO: /users/profesor/" + profId + "/alumnos ===");
+			TypedQuery<Users> query = entityManager.createQuery(
+					"SELECT DISTINCT h.users FROM Horarios h "
+					+ "JOIN h.modulos mo "
+					+ "JOIN mo.ciclos c "
+					+ "JOIN Matriculaciones ma ON ma.ciclos.id = c.id "
+					+ "WHERE ma.users.id = :id", Users.class);
+			
+			query.setParameter("id", id);
+			List<Users> teachers = query.getResultList();
+			
+			return ResponseEntity.ok(teachers);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		throw new Exception("Unable to build JPQL for Profesores by alumId. Check Horarios entity mapping.");
+	}
 
-			// Paso 1: Sacar los ciclo_id de los módulos del horario del profesor
-			TypedQuery<Integer> qCiclos = entityManager.createQuery("SELECT DISTINCT m.ciclos.id " + "FROM Horarios h "
-					+ "JOIN h.modulos m " + "WHERE h.users.id = :pid", Integer.class);
-			qCiclos.setParameter("pid", profId);
-			List<Integer> cicloIds = qCiclos.getResultList();
+	@GetMapping("/profesor/{profesorId}/alumnos")
+	public ResponseEntity<?> getAlumnosFromProfesor(@PathVariable Integer profesorId) {
+		try {
+			TypedQuery<Users> query = entityManager.createQuery(
+					"SELECT DISTINCT ma.users "
+					+ "FROM Matriculaciones ma "
+					+ "JOIN ma.ciclos c "
+					+ "JOIN c.modulos mo "
+					+ "JOIN mo.horarios h "
+					+ "WHERE h.users.id = :profesorId", Users.class);
+			query.setParameter("profesorId", profesorId);
+			List<Users> students = query.getResultList();
 
-			System.out.println("Ciclos encontrados: " + cicloIds);
-
-			if (cicloIds == null || cicloIds.isEmpty()) {
-				System.out.println("No se encontraron ciclos para el profesor " + profId);
-				return ResponseEntity.ok(Collections.emptyList());
-			}
-
-			// Paso 2: Sacar los alumnos matriculados en esos ciclos
-			TypedQuery<Users> qAlumnos = entityManager.createQuery("SELECT DISTINCT mat.users "
-					+ "FROM Matriculaciones mat " + "WHERE mat.ciclos.id IN :cicloIds " + "AND mat.users.tipos.id = 4",
-					Users.class);
-			qAlumnos.setParameter("cicloIds", cicloIds);
-			List<Users> alumnos = qAlumnos.getResultList();
-
-			System.out.println("Alumnos encontrados: " + alumnos.size());
-
-			return ResponseEntity.ok(alumnos);
+			return ResponseEntity.ok(students);
 		} catch (Exception e) {
 			System.err.println("ERROR en getAlumnosFromProfesor: " + e.getMessage());
 			e.printStackTrace();

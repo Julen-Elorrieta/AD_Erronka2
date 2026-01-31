@@ -34,10 +34,10 @@ public class Tipos implements java.io.Serializable {
 		this.name = name;
 	}
 
-	public Tipos(String name, String nameEu, Set userses) {
+	public Tipos(String name, String nameEu, Set<Users> users) {
 		this.name = name;
 		this.nameEu = nameEu;
-		//this.userses = userses;
+		this.users = users;
 	}
 
 	public Integer getId() {
@@ -64,13 +64,12 @@ public class Tipos implements java.io.Serializable {
 		this.nameEu = nameEu;
 	}
 	
-	/*
-	public Set getUserses() {
-		return this.userses;
+	@JsonIgnore
+	public Set<Users> getUserses() {
+		return this.users;
 	}
 
-	public void setUserses(Set userses) {
-		this.userses = userses;
+	public void setUserses(Set<Users> userses) {
+		this.users = userses;
 	}
-	*/
 }

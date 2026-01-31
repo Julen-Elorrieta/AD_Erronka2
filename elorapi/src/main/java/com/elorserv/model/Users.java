@@ -41,18 +41,22 @@ public class Users implements java.io.Serializable {
     private Timestamp updatedAt;
 
     // IMPORTANT: @JsonIgnore para evitar que el JSON del Login sea infinito
-    @JsonIgnore @OneToMany(mappedBy = "users")
+    @JsonIgnore 
+    @OneToMany(mappedBy = "users")
     private Set<Matriculaciones> matriculaciones = new HashSet<>(0);
 
-    @JsonIgnore @OneToMany(mappedBy = "usersByAlumnoId")
-    private Set<Reuniones> reunionesesForAlumnoId = new HashSet<>(0);
+    @JsonIgnore 
+    @OneToMany(mappedBy = "usersByAlumnoId")
+    private Set<Reuniones> reunionesForAlumnoId = new HashSet<>(0);
 
+    @JsonIgnore
     @OneToMany(mappedBy = "users")
-    @JsonManagedReference(value = "users-horarios")
+    //@JsonManagedReference(value = "users-horarios")
     private Set<Horarios> horarios = new HashSet<>(0);
 
-    @JsonIgnore @OneToMany(mappedBy = "usersByProfesorId")
-    private Set<Reuniones> reunionesesForProfesorId = new HashSet<>(0);
+    @JsonIgnore 
+    @OneToMany(mappedBy = "usersByProfesorId")
+    private Set<Reuniones> reunionesForProfesorId = new HashSet<>(0);
 	
 	public Users() {
 	}
@@ -82,9 +86,9 @@ public class Users implements java.io.Serializable {
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 		this.matriculaciones = matriculaciones;
-		this.reunionesesForAlumnoId = reunionesForAlumnoId;
+		this.reunionesForAlumnoId = reunionesForAlumnoId;
 		this.horarios = horarios;
-		this.reunionesesForProfesorId = reunionesForProfesorId;
+		this.reunionesForProfesorId = reunionesForProfesorId;
 	}
 
 	public Integer getId() {
@@ -199,35 +203,36 @@ public class Users implements java.io.Serializable {
 		this.updatedAt = updatedAt;
 	}
 	
-	public Set<Matriculaciones> getMatriculacioneses() {
+	public Set<Matriculaciones> getMatriculaciones() {
 		return this.matriculaciones;
 	}
 
-	public void setMatriculacioneses(Set<Matriculaciones> matriculacioneses) {
+	public void setMatriculaciones(Set<Matriculaciones> matriculacioneses) {
 		this.matriculaciones = matriculacioneses;
 	}
 
-	public Set<Reuniones> getReunionesesForAlumnoId() {
-		return this.reunionesesForAlumnoId;
+	public Set<Reuniones> getReunionesForAlumnoId() {
+		return this.reunionesForAlumnoId;
 	}
 
-	public void setReunionesesForAlumnoId(Set<Reuniones> reunionesesForAlumnoId) {
-		this.reunionesesForAlumnoId = reunionesesForAlumnoId;
+	public void setReunionesForAlumnoId(Set<Reuniones> reunionesForAlumnoId) {
+		this.reunionesForAlumnoId = reunionesForAlumnoId;
 	}
-
-	public Set<Horarios> getHorarioses() {
+	
+	@JsonIgnore
+	public Set<Horarios> getHorarios() {
 		return this.horarios;
 	}
 
-	public void setHorarioses(Set<Horarios> horarioses) {
+	public void setHorarios(Set<Horarios> horarioses) {
 		this.horarios = horarioses;
 	}
 
-	public Set<Reuniones> getReunionesesForProfesorId() {
-		return this.reunionesesForProfesorId;
+	public Set<Reuniones> getReunionesForProfesorId() {
+		return this.reunionesForProfesorId;
 	}
 
-	public void setReunionesesForProfesorId(Set<Reuniones> reunionesesForProfesorId) {
-		this.reunionesesForProfesorId = reunionesesForProfesorId;
+	public void setReunionesForProfesorId(Set<Reuniones> reunionesForProfesorId) {
+		this.reunionesForProfesorId = reunionesForProfesorId;
 	}
 }

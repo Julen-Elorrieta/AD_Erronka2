@@ -35,7 +35,13 @@ public class HorariosController {
 
     private List<Horarios> findByUserId(Integer id) throws Exception {
         try {
-            TypedQuery<Horarios> q = entityManager.createQuery("SELECT h FROM Horarios h WHERE h.users.id = :id", Horarios.class);
+            TypedQuery<Horarios> q = entityManager.createQuery(
+            		"SELECT DISTINCT h "
+            		+ "FROM Horarios h "
+            		+ "JOIN FETCH h.modulos mo "
+            		+ "JOIN FETCH mo.ciclos c "
+            		+ "WHERE h.users.id = :id "
+            		+ "ORDER BY h.dia, h.hora", Horarios.class);
             q.setParameter("id", id);
             return q.getResultList(); // return even if empty
         } catch (IllegalArgumentException ex) {
@@ -46,31 +52,19 @@ public class HorariosController {
     }
     
     @GetMapping("/getHorariosIkasle/{id}")
-    public ResponseEntity<?> getHorariosFrom(Integer id) throws Exception{
+    public ResponseEntity<?> getHorariosFrom(@PathVariable Integer id) throws Exception{
     		try {
     			TypedQuery<Horarios> query = entityManager.createQuery(
-    					"SELECT h FROM Horarios h " +
-    					"JOIN h.modulos mo " +
-    					"JOIN mo.ciclos c " +
-    					"WHERE c.id IN (" +
-    					"  SELECT ma.ciclos.id " +
-    					"  FROM Matriculaciones ma " +
-    					"  WHERE ma.users.id = :param)", Horarios.class);
-    			query.setParameter("param", id);
+    					"SELECT DISTINCT h "
+    					+ "FROM Horarios h "
+    					+ "JOIN FETCH h.modulos mo "
+    					+ "JOIN FETCH mo.ciclos c "
+    					+ "JOIN Matriculaciones ma ON ma.ciclos.id = c.id "
+    					+ "WHERE ma.users.id = :id", Horarios.class);
+    			
+    			query.setParameter("id", id);
     			
     			List<Horarios> horarios = query.getResultList();
-    			
-    			if (!horarios.isEmpty()) {
-    				for(Horarios h : horarios) {
-    					if(h != null) {
-    						System.out.println(h.getId());
-    					} else {
-    						System.out.println("000000");
-    					}
-    				}
-    			} else {
-    				System.out.println("vacío");
-    			}
     			
     			return ResponseEntity.ok(horarios);
     		} catch (IllegalArgumentException ex) {

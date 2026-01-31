@@ -35,24 +35,26 @@ public class ReunionesController {
     @Autowired
     private ReunionesService reunionesService;
 
-    @GetMapping("/getReuniones/profesor/{id}")
-    public ResponseEntity<?> getReunionesByProfesorId(@PathVariable Integer id) {
-        try {
-            List<Reuniones> result = findByProfesorId(id);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Server error: " + e.getMessage());
-        }
-    }
+    @GetMapping("/getReuniones/{id}")
+    public ResponseEntity<?> getReuniones(@PathVariable Integer id) throws Exception {
+            try {
+                TypedQuery<Reuniones> q = entityManager.createQuery(
+                		"SELECT DISTINCT r FROM Reuniones r "
+                		+ "LEFT JOIN FETCH r.usersByAlumnoId alumno "
+                		+ "LEFT JOIN FETCH r.usersByProfesorId profe "
+                		+ "WHERE r.usersByAlumnoId.id = :id "
+                		+ "OR r.usersByProfesorId.id = :id "
+                		+ "ORDER BY r.fecha DESC", Reuniones.class);
+                
+                q.setParameter("id", id);
+                List<Reuniones> reuniones = q.getResultList();
+                
+                return ResponseEntity.ok(reuniones);
+            } catch (IllegalArgumentException ex) {
+                // try next
+            }
 
-    @GetMapping("/getReuniones/alumno/{id}")
-    public ResponseEntity<?> getReunionesByAlumnoId(@PathVariable Integer id) {
-        try {
-            List<Reuniones> result = findByAlumnoId(id);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Server error: " + e.getMessage());
-        }
+            throw new Exception("Unable to build JPQL for Reuniones by profesor id. Check Reuniones entity mapping.");
     }
 
     @PostMapping("/create")
@@ -108,48 +110,6 @@ public class ReunionesController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error: " + e.getMessage());
         }
-    }
-
-    private List<Reuniones> findByProfesorId(Integer id) throws Exception {
-        String[] candidates = {
-            "SELECT r FROM Reuniones r WHERE r.usersByProfesorId.id = :id",
-            "SELECT r FROM Reuniones r WHERE r.profesor.id = :id",
-            "SELECT r FROM Reuniones r WHERE r.usersByProfesorId = :id",
-            "SELECT r FROM Reuniones r WHERE r.profesor = :id"
-        };
-
-        for (String jpql : candidates) {
-            try {
-                TypedQuery<Reuniones> q = entityManager.createQuery(jpql, Reuniones.class);
-                q.setParameter("id", id);
-                return q.getResultList();
-            } catch (IllegalArgumentException ex) {
-                // try next
-            }
-        }
-
-        throw new Exception("Unable to build JPQL for Reuniones by profesor id. Check Reuniones entity mapping.");
-    }
-
-    private List<Reuniones> findByAlumnoId(Integer id) throws Exception {
-        String[] candidates = {
-            "SELECT r FROM Reuniones r WHERE r.usersByAlumnoId.id = :id",
-            "SELECT r FROM Reuniones r WHERE r.alumno.id = :id",
-            "SELECT r FROM Reuniones r WHERE r.usersByAlumnoId = :id",
-            "SELECT r FROM Reuniones r WHERE r.alumno = :id"
-        };
-
-        for (String jpql : candidates) {
-            try {
-                TypedQuery<Reuniones> q = entityManager.createQuery(jpql, Reuniones.class);
-                q.setParameter("id", id);
-                return q.getResultList();
-            } catch (IllegalArgumentException ex) {
-                // try next
-            }
-        }
-
-        throw new Exception("Unable to build JPQL for Reuniones by alumno id. Check Reuniones entity mapping.");
     }
 
 }

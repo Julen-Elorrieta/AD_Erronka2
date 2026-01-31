@@ -68,20 +68,20 @@ public class Ciclos implements java.io.Serializable {
 	}
 
 	@JsonIgnore
-	public Set<Modulos> getModuloses() {
+	public Set<Modulos> getModulos() {
 		return this.modulos;
 	}
 
-	public void setModuloses(Set<Modulos> moduloses) {
+	public void setModulos(Set<Modulos> moduloses) {
 		this.modulos = moduloses;
 	}
 	
 	@JsonIgnore
-	public Set<Matriculaciones> getMatriculacioneses() {
+	public Set<Matriculaciones> getMatriculaciones() {
 		return this.matriculaciones;
 	}
 
-	public void setMatriculacioneses(Set<Matriculaciones> matriculacioneses) {
+	public void setMatriculaciones(Set<Matriculaciones> matriculacioneses) {
 		this.matriculaciones = matriculacioneses;
 	}
 	
