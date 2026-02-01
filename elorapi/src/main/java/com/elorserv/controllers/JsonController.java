@@ -12,7 +12,7 @@ public class JsonController {
 
     private List<String> centerList = new ArrayList<>();
 
-    private final String JSON_URL = "http://10.5.104.100/ikastetxeak.json";
+    private final String JSON_URL = "http://localhost/ikastetxeak.json";
 
     @GetMapping
     public String getCenterList(){
