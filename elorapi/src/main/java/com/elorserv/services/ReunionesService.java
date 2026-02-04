@@ -118,7 +118,7 @@ public class ReunionesService {
         if (estado == null || estado.trim().isEmpty()) throw new IllegalArgumentException("estado is required");
 
         String normalized = estado.trim();
-        String[] allowed = {"onartzeke", "onartuta", "ezeztatuta", "gatazka"};
+        String[] allowed = {"aceptada", "denegada", "pendiente"};
         boolean ok = false;
         for (String a : allowed) if (a.equalsIgnoreCase(normalized)) { normalized = a; ok = true; break; }
         if (!ok) throw new IllegalArgumentException("Invalid estado. Allowed: onartzeke, onartuta, ezeztatuta, gatazka");
