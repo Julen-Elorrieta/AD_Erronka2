@@ -45,6 +45,7 @@ public final class Bilerak extends JFrame {
 	private final String erabiltzailea;
 	private List<Meetings.BileraData> oraingkoBilerak;
 
+	@SuppressWarnings("unchecked")
 	public Bilerak(String erabiltzailea) {
 		this.bileraBezeroa = new Meetings();
 		this.erabiltzailea = erabiltzailea;

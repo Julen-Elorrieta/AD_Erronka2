@@ -28,10 +28,8 @@ public final class Ikasleak extends JFrame {
 	private final JButton freskatuBotoia;
 	private final JLabel hautatutakoErabiltzaileEtiketa;
 	private final JLabel egoerakoEtiketa;
-	private final String erabiltzailea;
 
 	public Ikasleak(String erabiltzailea) {
-		this.erabiltzailea = erabiltzailea;
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 900, 600);

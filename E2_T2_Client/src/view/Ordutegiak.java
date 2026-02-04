@@ -23,10 +23,8 @@ public class Ordutegiak extends JFrame {
     private final JPanel edukiPanel;
     private final AstekoOrdutegia ordutegiaTaula;
     private final JLabel egoerakoEtiketa;
-    private final String erabiltzailea;
 
     public Ordutegiak(String erabiltzailea) {
-        this.erabiltzailea = erabiltzailea;
 
         setTitle("Ordutegia - EE Software");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
