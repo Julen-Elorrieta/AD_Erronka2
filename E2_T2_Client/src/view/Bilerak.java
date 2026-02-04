@@ -2,6 +2,7 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -24,6 +25,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
 import utils.Meetings;
+import utils.SessionManager;
 
 public final class Bilerak extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -86,15 +88,54 @@ public final class Bilerak extends JFrame {
 		JPanel azpiPanel = sortuAzpiPanel();
 		edukiPanel.add(azpiPanel, BorderLayout.SOUTH);
 
-		egoerakoEtiketa = (JLabel) ((JPanel) goiPanel.getComponent(1)).getComponent(0);
-		guztiraEtiketa = (JLabel) ((JPanel) goiPanel.getComponent(1)).getComponent(2);
-		bilatuTestua = (JTextField) ((JPanel) goiPanel.getComponent(0)).getComponent(1);
-		egoerakoIragazkiCombo = (JComboBox<String>) ((JPanel) goiPanel.getComponent(0)).getComponent(3);
-		btnFreskatu = (JButton) ((JPanel) goiPanel.getComponent(0)).getComponent(4);
-		btnErakutsiGuztiak = (JButton) ((JPanel) goiPanel.getComponent(0)).getComponent(5);
-		btnIkusiXehetasunak = (JButton) ((JPanel) azpiPanel.getComponent(0)).getComponent(0);
-		btnIragaziIrakaslea = (JButton) ((JPanel) azpiPanel.getComponent(0)).getComponent(1);
-		btnIragaziIkaslea = (JButton) ((JPanel) azpiPanel.getComponent(0)).getComponent(2);
+		// Obtener componentes del goiPanel (BorderLayout: NORTH=titulo, CENTER=iragazkiPanel, SOUTH=egoerakoPanel)
+		JPanel iragazkiPanel = null;
+		JPanel egoerakoPanel = null;
+		for (int i = 0; i < goiPanel.getComponentCount(); i++) {
+			Component comp = goiPanel.getComponent(i);
+			if (comp instanceof JPanel) {
+				JPanel panel = (JPanel) comp;
+				if (panel.getLayout() instanceof FlowLayout) {
+					if (panel.getComponentCount() > 5) {
+						iragazkiPanel = panel;
+					} else if (panel.getComponentCount() >= 3) {
+						egoerakoPanel = panel;
+					}
+				}
+			}
+		}
+		
+		// Asignar componentes del egoerakoPanel
+		if (egoerakoPanel != null && egoerakoPanel.getComponentCount() >= 3) {
+			egoerakoEtiketa = (JLabel) egoerakoPanel.getComponent(0);
+			guztiraEtiketa = (JLabel) egoerakoPanel.getComponent(2);
+		} else {
+			throw new IllegalStateException("No se pudo encontrar el panel de estado");
+		}
+		
+		// Asignar componentes del iragazkiPanel
+		if (iragazkiPanel != null && iragazkiPanel.getComponentCount() >= 6) {
+			bilatuTestua = (JTextField) iragazkiPanel.getComponent(1);
+			egoerakoIragazkiCombo = (JComboBox<String>) iragazkiPanel.getComponent(3);
+			btnFreskatu = (JButton) iragazkiPanel.getComponent(4);
+			btnErakutsiGuztiak = (JButton) iragazkiPanel.getComponent(5);
+		} else {
+			throw new IllegalStateException("No se pudo encontrar el panel de filtros");
+		}
+		
+		// Asignar componentes del azpiPanel
+		if (azpiPanel.getComponentCount() >= 1) {
+			Component primeraFila = azpiPanel.getComponent(0);
+			if (primeraFila instanceof JPanel && ((JPanel) primeraFila).getComponentCount() >= 3) {
+				btnIkusiXehetasunak = (JButton) ((JPanel) primeraFila).getComponent(0);
+				btnIragaziIrakaslea = (JButton) ((JPanel) primeraFila).getComponent(1);
+				btnIragaziIkaslea = (JButton) ((JPanel) primeraFila).getComponent(2);
+			} else {
+				throw new IllegalStateException("No se pudo encontrar el panel de botones");
+			}
+		} else {
+			throw new IllegalStateException("No se pudo encontrar el panel inferior");
+		}
 
 		kargatuBileraGuztiak();
 	}
@@ -215,7 +256,14 @@ public final class Bilerak extends JFrame {
 
 		new Thread(() -> {
 			try {
-				oraingkoBilerak = bileraBezeroa.lortuBileraGuztiak();
+				// Obtener el ID del profesor desde SessionManager
+				Long irakasleaId = SessionManager.getInstance().getErabiltzaileId();
+				if (irakasleaId != null) {
+					oraingkoBilerak = bileraBezeroa.lortuBilerakIrakasleaArabera(irakasleaId);
+				} else {
+					// Fallback: cargar todas las reuniones si no hay ID
+					oraingkoBilerak = bileraBezeroa.lortuBileraGuztiak();
+				}
 
 				EventQueue.invokeLater(() -> {
 					eguneratuTabla(oraingkoBilerak);

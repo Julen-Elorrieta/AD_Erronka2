@@ -91,7 +91,13 @@ public final class Meetings {
 	}
 
 	private BileraData jsonToBileraData(JsonObject bileraJson) {
-		Long bileraId = bileraJson.get("idReunion").getAsLong();
+		Long bileraId = bileraJson.has("idReunion") && !bileraJson.get("idReunion").isJsonNull()
+				? bileraJson.get("idReunion").getAsLong()
+				: null;
+		
+		if (bileraId == null) {
+			throw new IllegalArgumentException("El campo 'idReunion' es obligatorio");
+		}
 
 		String egoera = bileraJson.has("estado") && !bileraJson.get("estado").isJsonNull()
 				? bileraJson.get("estado").getAsString()
@@ -128,10 +134,19 @@ public final class Meetings {
 		LocalDateTime data = null;
 		if (bileraJson.has("fecha") && !bileraJson.get("fecha").isJsonNull()) {
 			String dataStr = bileraJson.get("fecha").getAsString();
-			try {
-				data = LocalDateTime.parse(dataStr);
-			} catch (Exception e) {
-				System.err.println("Errorea data analizatzean: " + dataStr);
+			if (!dataStr.isEmpty()) {
+				try {
+					// Intentar primero formato ISO
+					data = LocalDateTime.parse(dataStr);
+				} catch (Exception e1) {
+					try {
+						// Intentar formato SQL timestamp: "yyyy-MM-dd HH:mm:ss.S"
+						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S");
+						data = LocalDateTime.parse(dataStr, formatter);
+					} catch (Exception e2) {
+						System.err.println("Errorea data analizatzean: " + dataStr);
+					}
+				}
 			}
 		}
 

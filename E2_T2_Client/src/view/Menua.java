@@ -1,7 +1,6 @@
 package view;
 
 import java.awt.Color;
-import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -17,7 +16,6 @@ public final class Menua extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private final JPanel edukiPanel;
 	private final String erabiltzailea;
-	
 
 	public Menua(String erabiltzailea) {
 		this.erabiltzailea = erabiltzailea;
@@ -62,7 +60,8 @@ public final class Menua extends JFrame {
 	private void gehituMenuBotoiak() {
 		JButton btnOrdutegia = sortuMenuBotoia("Ordutegia", 200, 150);
 		btnOrdutegia.addActionListener(e -> {
-			// TODO: Ordutegia aplikatu
+			dispose();
+			new Ordutegiak(erabiltzailea).setVisible(true);
 		});
 		edukiPanel.add(btnOrdutegia);
 

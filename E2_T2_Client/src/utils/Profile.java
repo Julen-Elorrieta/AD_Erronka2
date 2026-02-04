@@ -112,6 +112,62 @@ public final class Profile {
 		};
 	}
 
+	public boolean eguneratuErabiltzailea(Long id, String izena, String abizenak, String dni, 
+			String helbidea, String telefonoa1, String telefonoa2) {
+		try (Socket socket = new Socket(ZERBITZARIA_HOST, ZERBITZARIA_PORTUA)) {
+			socket.setSoTimeout(TIMEOUT);
+
+			try (PrintWriter irteera = new PrintWriter(socket.getOutputStream(), true);
+					BufferedReader sarrera = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+				// Create JSON with updated user data
+				JsonObject userData = new JsonObject();
+				userData.addProperty("id", id);
+				userData.addProperty("nombre", izena);
+				userData.addProperty("apellidos", abizenak);
+				userData.addProperty("dni", dni);
+				userData.addProperty("direccion", helbidea);
+				userData.addProperty("telefono1", telefonoa1);
+				userData.addProperty("telefono2", telefonoa2);
+
+				String komandoa = "EGUNERATU_USER:" + gson.toJson(userData);
+				irteera.println(komandoa);
+
+				String erantzuna = sarrera.readLine();
+
+				if (erantzuna == null || erantzuna.trim().isEmpty()) {
+					System.err.println("Ez da erantzunik jaso zerbitzaritik");
+					return false;
+				}
+
+				JsonObject jsonErantzuna = gson.fromJson(erantzuna, JsonObject.class);
+
+				if (jsonErantzuna.has("errorea")) {
+					System.err.println("Zerbitzari errorea: " + jsonErantzuna.get("errorea").getAsString());
+					return false;
+				}
+
+				if (jsonErantzuna.has("arrakasta") && jsonErantzuna.get("arrakasta").getAsBoolean()) {
+					System.out.println("Erabiltzailea ondo eguneratu da");
+					return true;
+				}
+
+				System.err.println("Ezin izan da erabiltzailea eguneratu");
+				return false;
+			}
+		} catch (SocketTimeoutException e) {
+			System.err.println("Timeout zerbitzarira konektatzean: " + e.getMessage());
+			return false;
+		} catch (IOException e) {
+			System.err.println("Konexio errorea: " + e.getMessage());
+			return false;
+		} catch (Exception e) {
+			System.err.println("Ustekabeko errorea: " + e.getMessage());
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 	private ErabiltzaileProfilData jsonToErabiltzaileProfilData(JsonObject userJson) {
 		Long id = userJson.get("id").getAsLong();
 		String email = userJson.get("email").getAsString();

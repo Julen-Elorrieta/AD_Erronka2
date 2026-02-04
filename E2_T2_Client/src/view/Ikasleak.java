@@ -16,6 +16,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import utils.GetAllUsers;
+import utils.SessionManager;
 import utils.UserListTable;
 
 public final class Ikasleak extends JFrame {
@@ -108,8 +109,23 @@ public final class Ikasleak extends JFrame {
 
 		new Thread(() -> {
 			try {
+				Long profeId = SessionManager.getInstance().getErabiltzaileId();
+				
+				if (profeId == null) {
+					EventQueue.invokeLater(() -> {
+						egoerakoEtiketa.setText("❌ Ez dago saio aktiborik");
+						freskatuBotoia.setEnabled(true);
+						JOptionPane.showMessageDialog(this,
+							"Ezin izan dira ikasleak kargatu.\nMesedez, hasi saioa berriro.",
+							"Saio Errorea",
+							JOptionPane.ERROR_MESSAGE);
+					});
+					return;
+				}
+
 				GetAllUsers bezeroa = new GetAllUsers();
-				List<GetAllUsers.ErabiltzaileData> ikasleak = bezeroa.lortuErabiltzaileakMotarenArabera(4);
+				// Obtener solo los alumnos del profesor logueado
+				List<GetAllUsers.ErabiltzaileData> ikasleak = bezeroa.lortuAlumnoakIrakaslearenArabera(profeId);
 
 				EventQueue.invokeLater(() -> {
 					erabiltzaileTaula.garbituerabiltzaileak();
@@ -124,8 +140,8 @@ public final class Ikasleak extends JFrame {
 
 					if (ikasleak.isEmpty()) {
 						JOptionPane.showMessageDialog(this,
-								"Ez da ikaslerik aurkitu sisteman.\nEgiaztatu zerbitzaria martxan dagoela.",
-								"Daturik gabe", JOptionPane.WARNING_MESSAGE);
+								"Ez duzu ikaslerik une honetan.\nEgiaztatu zure moduluetan ikasleak badaudela.",
+								"Ikaslerik gabe", JOptionPane.INFORMATION_MESSAGE);
 					}
 				});
 
